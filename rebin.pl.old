@@ -1,0 +1,102 @@
+#!/usr/bin/perl
+sub rebin{
+
+# usage rebin(# new energy bins, # old energy bins, binning parameter, 
+#             old energy bins, old values,new energy bins, new values)              
+# provides linear binning assuming data is in response per bin. NOT response 
+# per unit energy.  It also does linear extrapolation for overlapping end bins
+# It assumes that the response per unit energy is linear.
+
+# Binning parameter is currently not used.
+
+# Note: This is written to be fast not understood. 
+#______________________________________________________________
+ 
+# Program is to rebin data into a given energy structure.
+my $num_new_bins=shift;
+my $num_old_bins=shift;
+my $bin_para=shift;
+my $old_bin=shift;
+my $old_value=shift;
+my $new_bin=shift;
+
+my @new_value;
+
+my $i;
+my $j;
+my @high;
+my $low_end;
+my $high_end;
+
+	for ($i=0;$i<$num_new_bins;$i++) {
+      	$new_value[$i]=0;
+		$high[$i]=0;
+		for ($j=0;$j<$num_old_bins;$j++) {
+			if (($new_bin->[$i]) > $old_bin->[$j]) {
+				$high[$i] = $j+1;
+			}
+		}
+	}
+
+   	$new_value[0]=0;
+	for ($i=0;$i<$num_new_bins;$i++) {
+		if ( ($new_bin->[$i]) <= $old_bin->[$num_old_bins-1] && $high[$i]>0) {
+			if ($high[$i]==$high[$i-1]) {
+				$new_value[$i]=$old_value->[$high[$i]]*
+              ($new_bin->[$i]-$new_bin->[$i-1])/
+              ($old_bin->[$high[$i]]-$old_bin->[$high[$i]-1]);
+			}
+			else  {
+				$new_value[$i]=$new_value[$i]+$old_value->[$high[$i]]*
+              ($new_bin->[$i]-$old_bin->[$high[$i]-1])/
+              ($old_bin->[$high[$i]]-$old_bin->[$high[$i]-1]);
+  	    	}
+
+			$new_value[$i+1]=$new_value[$i+1]+
+           $old_value->[$high[$i]]*($old_bin->[$high[$i]]-$new_bin->[$i])/
+           ($old_bin->[$high[$i]]-$old_bin[$high[$i]-1]);
+		}
+
+		for ($j=$high[$i]+1;$j<$high[$i+1];$j++) {
+			$new_value[$i+1]=$new_value[$i+1]+$old_value->[$j];
+		}
+		
+	}
+
+# Add linear correction to the tails
+
+	# Low end tail
+	$low_end=-1;
+	$high_end=-1;
+	for ($i=0;$i<$num_new_bins;$i++) {
+      if ($new_bin->[$i]<$old_bin[0]){
+		   $low_end=$i;
+		}
+
+      if ( ($new_bin->[$i]) > ($old_bin->[$num_old_bins-1]) ){
+		   $high_end=$i;
+		}
+	}
+   $high_end=$num_new_bins-$high_end-1;
+
+	if ($low_end > -1) {
+   	$new_value[$low_end+1]=$new_value[$low_end+1]+
+      ($old_value->[0]/($old_bin->[1]-$old_bin->[0]) 
+     +($old_value->[1]/($old_bin->[2]-$old_bin->[1])
+     -$old_value->[1])/($old_bin->[1]-$old_bin->[0])*
+      ($new_bin->[$low_end]-$old_bin[0])/($old_bin->[1]-$old_bin->[0]))*
+      ($old_bin->[0]-$new_bin->[$low_end]);
+	}				
+	if ($high_end>-1) {
+		$new_value[$high_end]=$new_value[$high_end]+
+      (($old_value->[$num_old_bins-1])/($old_bin->[$num_old_bins-1]-$old_bin->[$num_old_bins-2])
+     +(($old_value->[$num_old_bins-1])/($old_bin->[$num_old_bins-1]-$old_bin->[$num_old_bins-2])
+     - ($old_value->[$num_old_bins-2])/($old_value->[$num_old_bins-2]-$old_value->[$num_old_bins-3]))*
+      ($new_bin->[$high_end]-$old_bin->[$num_old_bins-1])/($old_bin->[$num_old_bins-1]-$old_bin->[$num_old_bins-2]))*
+      ($new_bin->[$high_end]-$old_bin->[$num_old_bins-1]);
+	}				
+
+	return \@new_value;
+}
+1;
+

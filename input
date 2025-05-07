@@ -1,0 +1,50 @@
+Name: Jeremy
+title: JUnk
+max_energy: 20 
+matrix: UTA4
+bare: true
+barecd:  
+2inch: true
+2inchcd: 
+3inch: true
+3inchcd: 
+5inch: true 
+5inchcd: 
+8inch: true
+10inch: true
+12inch: true 
+18inch: 
+bare counts: 8.923 
+bare counts error: 1
+barecd counts: 
+barecd counts error:
+2 inch counts: 60  
+2 inch counts error: 1
+2 inch cd counts:
+2 inch cd counts error:
+3 inch counts: 115 
+3 inch counts error: 3
+3 inch cd counts:
+3 inch cd counts error:
+5 inch counts: 123.8
+5 inch counts error: 1
+5 inch cd counts:
+5 inch cd counts error:
+8 inch counts: 75 
+8 inch counts error: 1
+10 inch counts: 43 
+10 inch counts error: 2
+12 inch counts: 23 
+12 inch counts error: 1
+18 inch counts: 
+18 inch counts error:
+iter: 1000
+alg: spunit
+max:  
+tempij: .12 
+itertesterror: 100
+endtesterror: 10
+smoothing: .1
+cal_factor: 1.0
+shape: 0.0
+perturbation: 0.1

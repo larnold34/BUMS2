@@ -1,0 +1,58 @@
+<html>
+<head>
+<title>NotEzy Unfolding Page</title>
+</head>
+<hr>
+<form action="http://nukeisit.gatech.edu/cgi-bin/form3.cgi"METHOD=GET>
+<body bgcolor=Yellow Text=Black>
+Please enter your name here: <br>
+<input type="text" name="Name" size=50>
+<p>
+Enter a title for your data: <br>
+<input type="test" name="title" size=75>
+<p>
+Enter the number of energy groups:
+<p>
+<input type="text" size=5 name="Egroup">
+<p>
+Check the response matrix you would like to use:
+<menu>
+<input type="radio" name="matrix" value="UTA4">UTA4
+<input type="radio" name="matrix" value="HEVE4">HEVE4
+<input type="radio" name="matrix" value="VHS">VHS
+</menu>
+<menu>
+<input type="checkbox" Name="bare" Value="tue">Bare det.
+<input type="checkbox" Name="2inch" Value="true">2 inch ball
+<input type="checkbox" Name="3inch" Value="true">3 inch ball
+<input type="checkbox" Name="5inch" Value="true">5 inch ball
+<input type="checkbox" Name="8inch" Value="true">8 inch ball
+<input type="checkbox" Name="10inch" Value="true">10 inch ball
+<input type="checkbox" Name="12inch" Value="true">12 inch ball
+</menu>
+<p>
+<th>Count</th>
+<input type="test" size=9 name="bare counts">
+<input type="test" size=9 name="2 inch counts">
+<input type="test" size=9 name="3 inch counts"> 
+<input type="test" size=9 name="5 inch counts"> 
+<input type="test" size=9 name="8 inch counts">
+<input type="test" size=9 name="10 inch counts">
+<input type="test" size=9 name="12 inch counts">
+<p>
+Enter the maximum number of iterations to be performed
+<input type="test" size=10 name="iter">
+<p>
+Select the unfolding algorithm to be used:
+<input type="radio" name="alg" value="spunit">SPUNIT
+<input type="radio" name="alg" value="bon">BON
+<input type="radio" name="alg" value="sweezy">SWEEZY'S HANDY DANDY METHOD
+<hr>
+<center>
+<input type=submit value="Unfold it !!">
+<input type=reset value="Clear">
+</center>
+<hr>
+</form>
+</body>
+</html>                      
