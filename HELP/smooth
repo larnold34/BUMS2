@@ -1,0 +1,12 @@
+<h3> Smoothing</h3>
+
+The Smoothing Factor S is used as follows:
+
+<p>X<sub>s</sub>(i)=(SX(i-1) + X(i) + S(i+1))/(1+2S)     i=2,3...(N-1)
+<p>X<sub>s</sub>(1)=X(1)
+<p>X<sub>s</sub>(N)=X(N)
+
+<p>From:
+<br>
+K. Lowry and T. Johnson "Modifications to Iterative Recursion Unfolding Algorithms and Computer Codes to Find More Appropriate Neutron Spectra", Naval Research Laboratory, Washington, D.C.
+

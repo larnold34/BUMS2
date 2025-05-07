@@ -1,0 +1,10 @@
+<h3>Detectors Used To Unfold</h3>
+
+<p>Check the detectors that you wish to performing the unfolding with.  
+Athough data my be entered for all of the detectors BUMS only uses the
+ones which you select.  This allows you to compare unfoldings with many 
+different combinations of detectors.</p>
+ 
+<p>For example try unfolding your measurements with and without the bare 
+detector.  How do the results and the fit errors change?</p> 
+

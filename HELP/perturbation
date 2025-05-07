@@ -1,0 +1,14 @@
+<h3>Perturbation Step Size</h3>
+
+<p><b>ONLY USED IN THE MAXIET ALGORITHM</b>
+
+<p>Perturbation is the amount used to reduce the Maxwellian Temperature when searching for the best Maxwellian parameters
+
+<p>
+Max_Temperature = Max_Temperature - Perturbation
+
+<p> 
+After Max_Temperature is reduced less than Perturbation then Max_Temperature
+is set to Initial_Max_Temperature+3*Perturbation. And the search continues.
+
+

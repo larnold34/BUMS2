@@ -1,0 +1,38 @@
+<h3>Shape</h3>
+
+<p><b>ONLY AFFECTS THE MAXIET ALGORITHM</b></p>
+
+<p>Shape affects the shape of the Maxwellian.  The shape is only affected for 
+energies greater than the peak for the first iteration.  Later iterations may change the shape at energies less that the peak energy.  For a shape=0 the 
+maxwellian will fall off sharply, where as a shape=1.0 will cause the maxwellian 
+to be flat and equal to the peak value above the maxwellian peak.</p> 
+
+<img src=help/shape.gif>
+
+<p><br>
+
+
+<p>Below is a sample of the code that calculates the maxwellian spectra.  The code has been chaged to make it more readable.
+<pre>
+spmx = The maximum of the Maxwellian Peak initialized to 1.0.
+splmax(i) = The value of the maxwellian spectrum for bin i.
+num_energy_bins = The total number of energy bins.
+energy(i) = The average energy of bin i.
+
+
+for (i=0;i &lt; num_energy_bins+1;i=i+1) {
+    splmax(i)=energy(i)<sup>1.5</sup> * e<sup>(-energy(i)/temp)</sup>;
+    if (splmax(i) &gt; spmx) { 
+          spmx=splmax(i);
+    }
+    else {
+        Splmax(i)=spmx<sup>shape</sup> * splmax(i)<sup>1-shape</sup>;
+        if (splmax(i) < splmax(i-1)*0.01){ 
+            splmax(i)=splmax(i-1)*.01;
+        }
+    }
+}
+</pre>
+<br>
+</body>
+</html>

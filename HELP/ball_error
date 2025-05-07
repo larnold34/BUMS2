@@ -1,0 +1,9 @@
+<h3>Percent Error</h3>
+
+<p>
+Enter the error in the detector response.  Enter the error in units of percent.
+</p>
+
+<p>
+For example: If the detector error is 14%.  Enter the number "14".
+</p>

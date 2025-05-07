@@ -1,0 +1,5 @@
+<h3>Maximum Energy</h3>
+
+<p>The maximum neutron energy that may be present in the environment being 
+measured.  BUMS will not use the response matrix data above this energy.
+ 

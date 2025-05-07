@@ -1,0 +1,5 @@
+<h3>Final Error</h3>
+
+<p>Enter the final error in percent.  The final error is the fit error that 
+is used to halt the unfolding routine.  This value determines when the unfolded
+spectrum has converged.<p>

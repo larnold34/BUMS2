@@ -1,0 +1,11 @@
+<h3>Iterations Before Test Error</h3>
+
+<p>
+"Iterations Before Test Error" is the number of iterations that are performed 
+before the code checks for convergence.  It is important that this number not 
+be excessively large so that overiteration does not occur.  When using with 
+MAXIET algorithm this number will typically need to be 10 or larger so that
+the program does not halt on the initial exit of MAXIET.
+</p>
+
+<p> Future note:  Change the way the fit error is keep so that the unfolding algorthims will always be used on the exit of MAXIET.</p>

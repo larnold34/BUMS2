@@ -1,0 +1,9 @@
+<h3>Starting Spectrum</h3>
+
+<p>The starting spectrum may be choosen among the spectra listed here.  
+
+<p>The MAXIET algorithm may be choosen.
+<br>An individual starting spectrum may be choosen.
+<br>Or a search for the best starting spectrum may be done.  This does not include the MAXIET algorithm.
+
+<p>In the future the user will be able to input their own starting spectrum.

@@ -1,0 +1,12 @@
+<h3>Ball Count</h3>
+
+<p>
+Enter the counts registered by each detector.  The units of the resonse is up
+to you (i.e. counts per sec, counts per min., or counts per 5 mins).  Use the 
+same time units for each detector.  Be sure to correct for dead time of the 
+detector.
+</p>
+
+<p>
+You must also check "Detectors Used to Unfold" to actually use this data.
+</p>
