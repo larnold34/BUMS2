@@ -18,18 +18,18 @@ RUN apt-get update && \
     nano && \
     rm -rf /var/lib/apt/lists/*
 
- RUN apt update && apt install -y --no-install-recommends \ 
+ RUN apt-get update && apt-get install -y --no-install-recommends \ 
      curl \ 
      wget && \
      rm -rf /var/lib/apt/lists/*
 
- RUN apt update && apt install -y --no-install-recommends \ 
+ RUN apt-get update && apt-get install -y --no-install-recommends \ 
      libwww-perl \
      libmodule-build-perl \
      ca-certificates && \
      rm -rf /var/lib/apt/lists/*
 
- RUN apt update && apt install -y --no-install-recommends \ 
+ RUN apt-get update && apt-get install -y --no-install-recommends \ 
      gdb-minimal && \ 
      rm -rf /var/lib/apt/lists/*
 
@@ -38,6 +38,19 @@ RUN a2enmod cgi
 
 # Suppress ServerName warning
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
+
+# Helps Perl see the Math folder, fixes the interval search issue
+COPY ./MATH /usr/local/lib/site_perl/Math
+ENV PERL5LIB=/usr/local/lib/site_perl
+RUN echo "PERL5LIB=/usr/local/lib/site_perl" >>/etc/apache2/envvars
+
+#There are permission issues with macOS, these lines are to answer that for now. These should not matter to windows
+COPY ./notezy.cgi ./help.cgi ./redirect.cgi ./notezy.pl ./detector_response.cgi /usr/lib/cgi-bin/
+RUN chmod +x /usr/lib/cgi-bin/notezy.cgi \
+    /usr/lib/cgi-bin/help.cgi \
+    /usr/lib/cgi-bin/redirect.cgi \
+    /usr/lib/cgi-bin/notezy.pl \
+    /usr/lib/cgi-bin/detector_response.cgi
 
 # Configure Apache to execute CGI scripts from /usr/local/apache2/cgi-bin
 RUN chmod 755 /usr/lib/cgi-bin

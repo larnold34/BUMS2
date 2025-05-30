@@ -9,7 +9,7 @@ print start_html(-title=>'HELP',
 
 $page=param('page');
 
-if ($page=~ ?\.?){
+if ($page=~ /\./){
   print "Error - What are you trying to do, get the password file?";
 }
 else {
