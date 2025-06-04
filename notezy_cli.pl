@@ -35,8 +35,8 @@ opendir(DIR,"save");
 @parentfiles=readdir(DIR);
 closedir(DIR);
 foreach $filename (@parentfiles) {
-	if ($filename =~ /$ENV{'REMOTE_ADDR'}/){
-		open (IN,"save/$ENV{'REMOTE_ADDR'}") || die;
+	if ($filename =~ /testinput/){
+		open (IN,"save/testinput") || die;
 		restore_parameters(IN);
 		close IN;
 	}
@@ -117,7 +117,12 @@ else {
 
 &normalize;
 
+#It seems that right now spli is all zero since the all zero flux error is being tripped. To verify the following lines are added
+use Data::Dumper;
+print STDERR ">>> just before scale_factor, \@spli is:\n", Dumper(\@spli), "\n";
+
 $rnorm=&scale_factor(\@bce,\@errbce,\@aleth,$num_det,$num_groups,\@spli)*$cal;
+
 	
 print "rnorm = $rnorm",br;
 &cal_response;

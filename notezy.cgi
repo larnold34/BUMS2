@@ -9,7 +9,7 @@ opendir(DIR,"save");
 @parentfiles=readdir(DIR);
 closedir(DIR);
 foreach $filename (@parentfiles) {
-	if ($filename =~ /$ENV{'REMOTE_ADDR'}/){
+	if ($filename =~ /\Q$ENV{'REMOTE_ADDR'}\E/){
 		open (IN,"save/$ENV{'REMOTE_ADDR'}") || die;
 		restore_parameters(IN);
 		close IN;

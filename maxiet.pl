@@ -1,5 +1,10 @@
 #!/usr/bin/perl
 sub maxiet{
+#There seems to be an error within MAXIET where the spli variable is not being built properly when called.
+#This has resulted in the all flux being zero error introduced in shape_factor.pl
+#Verifying the MAXIET is called
+print STDERR "[maxiet] entry: num_groups=$num_groups, num_det=$num_det\n";
+
 print hr;
 print "Running MAXIET fit algorithm.",br;
 print "<pre>";
@@ -277,5 +282,7 @@ print "</pre>";
  
 #                           completion of maxiet algorithm     
 #                           maxiet QA'ed.
+#Verifying that MAXIET ran and spli was filled out completely
+print STDERR "[maxiet] exit: final \@spli = (", join(", ", map { defined $_ ? $_ : 'undef' } @spli), ")\n";
 }  
 1; 
