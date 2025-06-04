@@ -54,9 +54,11 @@ sub maxed{
 	print "<pre>";
 	chdir "maxed_data";	
 	system "rm OUT.OUT";		
-	system "rm OUT.TBL";		
+	system "rm OUT.TBL";
+	print "DEBUG: launching MAXED\n";		
 	print  `/usr/local/bin/maxed`;
 	print "</pre>";	
+	sleep 5;
 
 	open(IN,"OUT.OUT");
 	$junk=<IN>;
