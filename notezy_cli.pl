@@ -31,16 +31,30 @@ require "chi_squared.pl";
 require "sand2.pl";
 require "Math/Interpolate.pm";
 
-opendir(DIR,"save");
-@parentfiles=readdir(DIR);
-closedir(DIR);
-foreach $filename (@parentfiles) {
-	if ($filename =~ /testinput/){
-		open (IN,"save/testinput") || die;
-		restore_parameters(IN);
-		close IN;
-	}
+# opendir(DIR,"save");
+# @parentfiles=readdir(DIR);
+# closedir(DIR);
+# foreach $filename (@parentfiles) {
+# 	if ($filename =~ /testinput/){
+# 		open (IN,"save/testinput") || die;
+# 		restore_parameters(IN);
+# 		close IN;
+# 	}
+# }
+
+#The following will allow for a file path to be an arguement with the initial command
+my $file_path = shift
+    or die "Usage: $0 <path/to/input_file>\n";
+
+# Now open “$file_path” instead of a hardcoded string
+open my $fh, '<', $file_path
+    or die "Cannot open '$file_path': $!\n";
+
+# …the rest of your script can read from $fh as usual…
+while (<$fh>) {
+    chomp;
 }
+close $fh;
 
 &htmlinput;
 &initialize;
