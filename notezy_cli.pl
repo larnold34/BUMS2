@@ -46,15 +46,42 @@ require "Math/Interpolate.pm";
 my $file_path = shift
     or die "Usage: $0 <path/to/input_file>\n";
 
-# Now open “$file_path” instead of a hardcoded string
 open my $fh, '<', $file_path
     or die "Cannot open '$file_path': $!\n";
 
-# …the rest of your script can read from $fh as usual…
-while (<$fh>) {
-    chomp;
+my %data;
+while (my $line = <$fh>) {
+    chomp $line;
+    $line =~ s/\r$//;          # remove trailing CR if present
+    next if $line eq '';       # skip blank lines
+    next if $line =~ /^\s*;/;  # skip comment lines, this is really only for testing
+
+    # Split on the FIRST '='
+    # end up in $value intact.
+    my ($key, $value) = split(/=/, $line, 2);
+    $value = '' unless defined $value;
+
+    # Don’t uri_unescape here—keep "%2B", "%20", etc. as-is.
+    $data{$key} = $value;
 }
 close $fh;
+
+use CGI qw(param);
+#Making sure data is actually assigned
+{
+    no strict 'refs';
+    for my $k (keys %data) {
+        ${ $k } = $data{$k};
+    }
+    use strict 'refs';
+}
+
+param($_ => $data{$_}) for keys %data;
+
+# Debug: making sure that the file input is being read properly
+for my $k (sort keys %data) {
+    printf "%-20s => %s\n", $k, $data{$k};
+}
 
 &htmlinput;
 &initialize;
