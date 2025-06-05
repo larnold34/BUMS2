@@ -78,10 +78,6 @@ use CGI qw(param);
 
 param($_ => $data{$_}) for keys %data;
 
-# Debug: making sure that the file input is being read properly
-for my $k (sort keys %data) {
-    printf "%-20s => %s\n", $k, $data{$k};
-}
 
 &htmlinput;
 &initialize;
@@ -158,9 +154,6 @@ else {
 
 &normalize;
 
-#It seems that right now spli is all zero since the all zero flux error is being tripped. To verify the following lines are added
-use Data::Dumper;
-print STDERR ">>> just before scale_factor, \@spli is:\n", Dumper(\@spli), "\n";
 
 $rnorm=&scale_factor(\@bce,\@errbce,\@aleth,$num_det,$num_groups,\@spli)*$cal;
 
