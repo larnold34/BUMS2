@@ -118,6 +118,27 @@ sub output_cli {
 
     # Plot spectras
     _make_plot();
+
+    my $out_dir = "/usr/lib/cgi-bin/OUTPUT";
+    make_path($out_dir) unless -d $out_dir;
+
+    # 1) generate the .dat
+    my $dat = "$out_dir/for_detector_response.dat";
+    open my $DF, '>', $dat or die $!;
+    for my $j (0 .. $num_groups - 1) {
+        printf $DF "%e %e\n", $eend[$j], ($spl[$j] // 0);
+    }
+    close $DF;
+
+    # 2) call the detector script, redirecting STDIN
+    open my $DR, '-|', "perl /usr/lib/cgi-bin/detector_response_cli.pl < $dat"
+        or die "Can't run detector_response_cli.pl: $!\n";
+    open my $OUT, '>', "$out_dir/detector_response.txt" or die $!;
+    print $OUT $_ while <$DR>;
+    close $DR;
+    close $OUT;
+
+    warn "Wrote detector response to $out_dir/detector_response.txt\n";
 }
 
 sub _make_plot {
