@@ -31,15 +31,40 @@ require "chi_squared.pl";
 require "sand2.pl";
 require "Math/Interpolate.pm";
 
-opendir(DIR,"save");
-@parentfiles=readdir(DIR);
-closedir(DIR);
-foreach $filename (@parentfiles) {
-	if ($filename =~ /$ENV{'REMOTE_ADDR'}/){
-		open (IN,"save/$ENV{'REMOTE_ADDR'}") || die;
-		restore_parameters(IN);
-		close IN;
-	}
+# There seems to be an issue with macOS populating the parameters from the input file
+use URI::Escape qw(uri_unescape);
+
+# opendir(DIR,"save");
+# @parentfiles=readdir(DIR);
+# closedir(DIR);
+# foreach $filename (@parentfiles) {
+# 	if ($filename =~ /$ENV{'REMOTE_ADDR'}/){
+# 		open (IN,"save/$ENV{'REMOTE_ADDR'}") || die;
+# 		restore_parameters(IN);
+# 		close IN;
+# 	}
+# }
+
+my $ip = $ENV{'REMOTE_ADDR'};
+my $filepath = "save/$ip";
+
+if (-e $filepath) {
+    open (IN, $filepath) or die "Cannot open $filepath: $!";
+
+    while (<IN>) {
+        chomp;
+        next if $_ eq '' || $_ eq '=';  # skip empty lines
+        my ($key, $value) = split(/=/, $_, 2);
+        next unless defined $key;
+
+        # Decode URL-encoded values
+        $value = uri_unescape($value // '');  # handle undefined safely
+        param(-name => $key, -value => $value);
+    }
+
+    close IN;
+} else {
+    print "Warning: Input file $filepath not found", br;
 }
 
 &htmlinput;
@@ -118,7 +143,7 @@ else {
 &normalize;
 
 $rnorm=&scale_factor(\@bce,\@errbce,\@aleth,$num_det,$num_groups,\@spli)*$cal;
-	
+
 print "rnorm = $rnorm",br;
 &cal_response;
 &fit_error;
