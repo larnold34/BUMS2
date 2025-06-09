@@ -15,6 +15,7 @@ RUN apt-get update && \
     vim \
     vim-gtk3 \
     gnuplot \
+    dos2unix \
     nano && \
     rm -rf /var/lib/apt/lists/*
 
