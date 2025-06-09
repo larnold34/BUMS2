@@ -35,7 +35,7 @@ our @spc;
 our @spl;
 our @rem;
 our @prem;
-
+our @ce;
 our @splstart;
 
 sub output_cli {
@@ -122,15 +122,21 @@ sub output_cli {
     my $out_dir = "/usr/lib/cgi-bin/OUTPUT";
     make_path($out_dir) unless -d $out_dir;
 
-    # 1) generate the .dat
-    my $dat = "$out_dir/for_detector_response.dat";
-    open my $DF, '>', $dat or die $!;
+    my $dat     = "$out_dir/for_detector_response.dat";
+
+
+    open my $DF, '>', $dat
+        or die "Cannot write $dat: $!\n";
+
     for my $j (0 .. $num_groups - 1) {
-        printf $DF "%e %e\n", $eend[$j], ($spl[$j] // 0);
+        my $cev  = $ce[$j];
+        my $flux = $spc[$j] // 0;
+        printf $DF "%e %e\n", $cev, $flux;
     }
     close $DF;
 
-    # 2) call the detector script, redirecting STDIN
+
+    # Call the detector script, redirecting STDIN
     open my $DR, '-|', "perl /usr/lib/cgi-bin/detector_response_cli.pl < $dat"
         or die "Can't run detector_response_cli.pl: $!\n";
     open my $OUT, '>', "$out_dir/detector_response.txt" or die $!;
@@ -138,6 +144,7 @@ sub output_cli {
     close $DR;
     close $OUT;
 
+    unlink $dat;
     warn "Wrote detector response to $out_dir/detector_response.txt\n";
 }
 

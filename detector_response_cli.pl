@@ -204,11 +204,6 @@ sub log_linear_interpolate {
     $j = $n - 2    if $j >= $n - 1;
     my $k = $j + 1;
 
-    # if either value is zero or negative, fall back to linear
-    if ( ($Y->[$j] // 0) <= 0 || ($Y->[$k] // 0) <= 0 ) {
-        return linear_interpolate($x, $X, $Y);
-    }
-
     # otherwise do the log‐linear
     my $dy   = (log($Y->[$k]) - log($Y->[$j])) / ($X->[$k] - $X->[$j]);
     my $logy = $dy * ($x - $X->[$j]) + log($Y->[$j]);

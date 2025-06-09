@@ -131,7 +131,7 @@ our $use_det_18inch      = $data{'18inch'}         // '';
 our $count_18inch        = $data{'18_inch_counts'}     // 0;
 our $count_error_18inch  = $data{'18_inch_counts_error'} // 0;
 
-our $iter           = $data{iter}          // 0;
+our $max_iter           = $data{iter}          // 0;
 our $itrtst         = $data{itertesterror} // 0;
 our $tstper         = $data{endtesterror}  // 0;
 our $tempm          = $data{tempij}        // 0.0;
@@ -274,7 +274,10 @@ for (my $i = 0; $i < $num_groups; $i++) {
     $splstart[$i] = $spli[$i] * $rnorm;
 }
 
-my $iter       = 0;
+{
+  no warnings 'redefine';
+  our $iter = 0;
+}
 my $starterror = sqrt($error / $num_det) * 100;
 
 our $unfold = "";
@@ -299,7 +302,7 @@ else {
     printf "Iteration = %-4d   Error = %7.3f   Chi-Squared = %11.3E\n",
            $iter, $starterror, $chi;
 
-    if ($iter > 0) {
+    if ($max_iter > 0) {
         $chi = 9e+99;
         do {
             $erroru  = $error;
