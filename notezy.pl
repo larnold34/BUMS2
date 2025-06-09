@@ -142,8 +142,7 @@ else {
 
 &normalize;
 
-# $rnorm=&scale_factor(\@bce,\@errbce,\@aleth,$num_det,$num_groups,\@spli)*$cal;
-$rnorm = &scale_factor(\@bce,\@errbce,\@aleth,$num_det,$num_groups,\@spli) * $cal;
+$rnorm=&scale_factor(\@bce,\@errbce,\@aleth,$num_det,$num_groups,\@spli)*$cal;
 
 print "rnorm = $rnorm",br;
 &cal_response;
