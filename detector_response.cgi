@@ -7,7 +7,7 @@ require "dfact.pl";
 
 print header;
 print start_html(-title=>'Notezy Home Page',
-	         -BGCOLOR=>'blue', -LINK=>'Red', -VLINK=>'Red', -ALINK=>'blue');
+	         -BGCOLOR=>'yellow', -LINK=>'Red', -VLINK=>'Red', -ALINK=>'blue');
 
 require "dir_read.pl";
 use Math::IntervalSearch qw(interval_search);

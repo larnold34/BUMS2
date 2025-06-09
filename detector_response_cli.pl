@@ -74,12 +74,12 @@ for my $fn (@file) {
 
     printf "%-30s %15.5e %8s\n", $head, $sum, $units;
 }
-print "\n";
+# print "\n";
 
-#----Standard Equivalent Dose Calculations ----
-print "Standard Equivalent Dose Calculations:\n";
-printf "%-45s %15s\n", "Name", "Value (pSv)";
-print "-" x 60, "\n";
+# #----Standard Equivalent Dose Calculations ----
+# print "Standard Equivalent Dose Calculations:\n";
+# printf "%-45s %15s\n", "Name", "Value (pSv)";
+# print "-" x 60, "\n";
 
 #ICRP-21
 {
@@ -196,17 +196,18 @@ sub linear_interpolate {
 sub log_linear_interpolate {
     my ($x, $X, $Y) = @_;
     my $n = @$X;
-    return 0 unless $n == @$Y;
+    return unless $n == @$Y;
 
-    # find bracketing indices
+    # bracket and clamp
     my $j = interval_search($x, $X);
-    $j =   0       if $j <  0;
-    $j = $n - 2    if $j >= $n - 1;
+    $j =   0      if $j <  0;
+    $j = $n - 2   if $j >= $n-1;
     my $k = $j + 1;
 
-    # otherwise do the log‐linear
-    my $dy   = (log($Y->[$k]) - log($Y->[$j])) / ($X->[$k] - $X->[$j]);
-    my $logy = $dy * ($x - $X->[$j]) + log($Y->[$j]);
-    return exp($logy);
+    # linear in Y vs. log(X)
+    my $dy = ($Y->[$k] - $Y->[$j])
+           / (log($X->[$k]) - log($X->[$j]));
+    return $dy * (log($x) - log($X->[$j])) + $Y->[$j];
 }
+
 
