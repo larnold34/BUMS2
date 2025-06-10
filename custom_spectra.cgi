@@ -6,7 +6,7 @@ require "dir_read.pl";
 
 print header;
 print start_html(-title=>'Custom Spectrum Input Page',
-	         -BGCOLOR=>'blue', -LINK=>'Red', -VLINK=>'Red', -ALINK=>'blue');
+	         -BGCOLOR=>'yellow', -LINK=>'Red', -VLINK=>'Red', -ALINK=>'blue');
 print qq\<meta http-equiv="Pragma" content="no-cache">\;
 
 print center(h1("BUMS Custom Spectra Input Page!"));
