@@ -26,7 +26,7 @@ require "rebin.pl";
 require "ede.pl";
 require "plot.pl";
 require "dfact.pl";
-require "user_input_spectra.pl";
+require "user_input_spectra_cli.pl";
 require "maxed_cli.pl";
 require "scale_factor.pl";
 require "chi_squared.pl";
@@ -249,7 +249,7 @@ if ($start_spec =~ /MAXIET/){
 	&maxiet_cli;
 }
 elsif ($start_spec =~ /User Input/){
-	&user_input;
+	&user_input_cli;
 }
 else {
 	&guess_cli;
