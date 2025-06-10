@@ -3,10 +3,10 @@
 #  spectrum to experimental data      
 sub normalize{
    my $i;
-	$rnorm=&scale_factor(\@bce,\@errbce,\@alethnew,$num_det,$num_groups,\@spli);
+	$rnorm=&scale_factor(\@bce,\@errbce,\@alethnew,$num_det,$num_groups,\@spl);
    
 	for ($i=0;$i<$num_groups;$i++){
-       		$spl[$i]=$spli[$i]*$rnorm;
+       		$spl[$i]=$spl[$i]*$rnorm;
 	}  
 }
 1;
