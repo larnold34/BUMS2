@@ -38,13 +38,40 @@ Create the docker image - just do this once.
 
 `docker build -t bums-server .`
 
+## Starting a Docker container
+
 Start an instance and mount your bums repo as /usr/lib/cgi-bin (use your own path, not `/Users/jsweezy/git_repos/bums/`)
 
 `docker run -it --rm   -v /Users/jsweezy/git_repos/bums/:/usr/lib/cgi-bin   -p 8080:80   bums-server   apachectl -D FOREGROUND`
 
-## Running BUMS
+## Running BUMS on web page
 
 Point your browser to: http://localhost:8080/cgi-bin/notezy.cgi
+
+## Running BUMS on command window
+
+In order to run BUMS from the command line, start another shell. You will need to get the hash of the running docker container:
+
+`docker ps`
+
+You will see output like:
+```
+CONTAINER ID   IMAGE         COMMAND                  CREATED             STATUS             PORTS                  NAMES
+b329bb59ef76   bums-server   "apachectl -D FOREGR…"   About an hour ago   Up About an hour   0.0.0.0:8080->80/tcp   romantic_ritchie
+```
+
+To start and interactive bash shel within the running container:
+
+`docker exec -it b329bb59ef76 bash`
+
+You will then see that you are in a bash shell within the container:
+
+```
+root@b329bb59ef76:/usr/lib/cgi-bin# 
+```
+
+To start BUMS within the docker contianer:
+`./notezy_cli.pl /path/to/input /path/to/output`
 
 ## Debugging errors
 
