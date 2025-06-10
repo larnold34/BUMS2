@@ -67,6 +67,9 @@ if (-e $filepath) {
     print "Warning: Input file $filepath not found", br;
 }
 
+#tempm issue, when using MAXIET the temp does not update accordingly
+my $tempm = scalar param('tempij');
+
 &htmlinput;
 &initialize;
 

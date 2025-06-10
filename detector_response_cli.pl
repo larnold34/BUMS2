@@ -205,9 +205,10 @@ sub log_linear_interpolate {
     my $k = $j + 1;
 
     # linear in Y vs. log(X)
-    my $dy = ($Y->[$k] - $Y->[$j])
-           / (log($X->[$k]) - log($X->[$j]));
-    return $dy * (log($x) - log($X->[$j])) + $Y->[$j];
+    my $dy = ($Y->[$k] - $Y->[$j]) / (log($X->[$k]) - log($X->[$j]));
+    my $y = $dy * (log($x) - log($X->[$j])) + $Y->[$j];
+
+    return wantarray ? ($y, $dy) : $y;
 }
 
 

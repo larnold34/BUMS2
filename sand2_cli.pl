@@ -11,6 +11,8 @@ our @errbce;       # count errors
 our @mat;          # response matrix
 our @eend;         # matrix endpoints
 our @spli;         # initial spectrum (rebinned)
+our @splstart;
+our @spl;     
 our $itrmax;       # max iterations for SANDII
 our $rnorm;        # scale factor result
 
@@ -95,7 +97,8 @@ sub sand2_cli {
     for ($i = 0; $i < $num_groups; $i++) {
         $junk = <$in_sii>;
         my @fields = split ' ', $junk;
-        $spli[$i] = $fields[4];
+        $splstart[$i] = $fields[3];
+        $spl[$i] = $fields[4];
     }
     close $in_sii;
 

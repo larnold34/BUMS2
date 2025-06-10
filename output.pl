@@ -10,7 +10,14 @@ chomp($HOSTNAME);
 	print "Response    Unfold   Maxwell      Calib.  Smooth   Per Cent    No. of",br;
 	print "Matrix	     Code   Temp,Shape    Factor  Factor    Error      Iterations",br;
    print "________    ______  ____,_____    ______  ______   ________    __________",br;
+   # printf "%-5s%13s%6.2f,%-4.2f%  10.4f%8.4f %9.4f%12d\n\n",$rmtx,$unfold,$tempij,$shape,$cal,$smo,$perror,$iter;
+   if (param('start_spec') =~ /MAXIET/){
+	printf "%-5s%13s%6.2f,%-4.2f%  10.4f%8.4f %9.4f%12d\n\n",$rmtx,$unfold,$tempm,$shape,$cal,$smo,$perror,$iter;
+
+   }
+   else{
 	printf "%-5s%13s%6.2f,%-4.2f%  10.4f%8.4f %9.4f%12d\n\n",$rmtx,$unfold,$tempij,$shape,$cal,$smo,$perror,$iter;
+   }
 
 #         12345678912345123456789012123123456789012121234567890
 	print "Detectors     Measured       Calculated    Percent",br;
