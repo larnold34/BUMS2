@@ -326,8 +326,7 @@ else {
             && $error > $tstper);
     }
 }
-# Just a verification that the right unfolding method was used
-print STDERR "\$unfold = '$unfold'\n";
+
 
 &sum_data;
 &output_cli;
