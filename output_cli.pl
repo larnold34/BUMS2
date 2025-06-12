@@ -145,7 +145,7 @@ sub output_cli {
     close $OUT;
 
     unlink $dat;
-    warn "Wrote detector response to $out_dir/detector_response.txt\n";
+    #warn "Wrote detector response to $out_dir/detector_response.txt\n";
 }
 
 sub _make_plot {
