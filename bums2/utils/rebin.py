@@ -7,8 +7,8 @@ from typing import List
 
 class Rebin:
     def __init__(self, old_edges: List[float], old_values: List[float], new_edges: List[float]):
-        if len(old_edges) != len(old_values):
-            raise ValueError("old_edges and old_values must have the same length")
+        # if len(old_edges) != len(old_values):
+        #     raise ValueError("old_edges and old_values must have the same length")
         self.old_edges = old_edges
         self.old_values = old_values
         self.new_edges = new_edges
@@ -34,37 +34,44 @@ class Rebin:
         # re bins             [ * * 3 4 5 6 7 * * ]
         re_bin = [e for e in self.new_edges if maxmin <= e <= minmax]
         jmax = len(re_bin)
-
         #Allocate intermediate accumulation array
         inter_value = [0.0] * (jmax-1)
 
         #Loop over the old bins and accumulate into each re_bin interval
-        for k in range(n_old-1):
+        for k in range(n_old - 1):
             e_old_lo = self.old_edges[k]
-            e_old_hi = self.old_edges[k+1]
-            val = self.old_values[k]
-            for j in range(jmax-1):
+            e_old_hi = self.old_edges[k + 1]
+            val      = self.old_values[k]
+
+            for j in range(jmax - 1):
                 e_lo = re_bin[j]
-                e_hi = re_bin[j+1]
-                #log width of the new bin
-                r2 = log(e_hi) - log(e_lo)
+                e_hi = re_bin[j + 1]
+                r2   = log(e_hi) - log(e_lo)
                 if r2 <= 0:
                     continue
-                #Determine the overlap length
-                if e_lo <= e_old_lo < e_hi: #New bin starts inside of the old bin
-                    upper = min(e_hi, e_old_hi)
-                    r1 = log(upper) - log(e_old_lo)
-                elif e_lo < e_old_hi <= e_hi: #New bin ends inside of th old bin
-                    lower = max(e_lo, e_old_lo)
-                    r1 = log(e_old_hi) - log(lower)
-                elif e_lo >= e_old_lo and e_hi <=e_old_hi: #The new bin is completely inside of the old bin
-                    r1 = log(e_hi) - log(e_lo)
-                else: #No overlap length
-                    r1 = 0.0
 
-                inter_value[j] += val * (r1/r2)
-            
-        new_values = [0.0]*n_new
+                 # Perl’s “if re_bin[l] <= old_bin[k]”
+                if e_lo <= e_old_lo:
+                    # Perl’s “if re_bin[l+1] > old_bin[k]”
+                    if e_hi > e_old_lo:
+                        # Perl’s inner test: does the entire old‐bin fit?
+                        if e_hi >= e_old_hi:
+                            r1 = log(e_old_hi) - log(e_old_lo)
+                        else:
+                            r1 = log(e_hi)      - log(e_old_lo)
+                        inter_value[j] += val * (r1 / r2)
+
+                # Perl’s “else { if re_bin[l] < old_bin[k+1] }”
+                else:
+                    if e_lo < e_old_hi:
+                        # Perl’s test for upper edge
+                        if e_hi <= e_old_hi:
+                            r1 = log(e_hi)      - log(e_lo)
+                        else:
+                            r1 = log(e_old_hi)  - log(e_lo)
+                        inter_value[j] += val * (r1 / r2)
+
+        new_values = [99.0]*n_new
         j = 0
         for k in range(n_new-1):
             e = self.new_edges[k]
@@ -73,5 +80,6 @@ class Rebin:
                 j += 1
             else:
                 new_values[k] = 0.0
+        formatted = ", ".join(f"{v:.4e}" for v in new_values)
         return new_values
                     

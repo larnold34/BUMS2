@@ -7,23 +7,25 @@ import numpy as np
 from bums2.core.config import Bums2Config
 
 class maxed:
-    def __init__(self, cfg: Bums2Config, e_end: np.ndarry, maxed_executable: Path = Path("/usr/local/bin/maxed"), workdir: Path = Path("maxed_data"),):
+    def __init__(self, cfg: Bums2Config, maxed_executable: Path = Path("/usr/local/bin/maxed"), workdir: Path = Path("maxed_data"),):
         self.cfg = cfg
-        self.e_end = e_end #This needs to be called in the driver by calling ResponseMatrix within the driver
+        self.e_end = self.cfg.e_end
         self.maxed_exe = maxed_executable
         self.workdir = workdir
         self.workdir.mkdir(exist_ok=True)
 
     def maxed_unfold(
             self,
-            alethnew: np.ndarray,
+            mat: np.ndarray,
             bce: np.ndarray,
             errbce: np.ndarray,
             spli: np.ndarray,
+            num_groups: float,
+            num_det: float
     ) -> Tuple[np.ndarray, np.ndarray]:
         #Perform MAXED unfolding
         #Parameters:
-        #alethnew : ndarray, shape(num_detectors, num_groups), The response matrix in terms of lethargy
+        #mat : ndarray, shape(num_detectors, num_groups), The response matrix
         #bce: ndarray, shape(num_detectors,), The measured counts
         #errbce: ndarray, shape(num_detectors,), The error of the measured counts
         #spli: ndarray, shape(num_groups,), The initial spectrum
@@ -31,7 +33,6 @@ class maxed:
         #Returns:
         #spl: ndarray, shape(num_groups,), The unfolded spectrum
         #splstart: ndarray, shape(num_groups,), The initial spectrum feed into maxed
-        num_det, num_groups = alethnew.shape
         total_groups = num_groups+1
 
         #Frist: write input_data file
@@ -64,7 +65,7 @@ class maxed:
 
             #Form the response matrix where each line is eend[j],value
             for j in range(1, total_groups):
-                row = alethnew[:, j-1]
+                row = mat[j-1,:]
                 vals = ",".join(str(x) for x in row)
                 fh.write(f"{self.cfg.e_end[j]},{vals}\n")
         

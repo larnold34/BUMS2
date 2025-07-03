@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 from typing import List, Tuple
 import numpy as np
+import re
 
 from bums2.core.config import Bums2Config
 
@@ -35,7 +36,7 @@ class ResponseMatrix:
     #Each column after that is a specific detector in full order, but only mark the columns being used
     #Collect rows until energy > max_energy
     @classmethod
-    def from_file(cls, matrix_name: str, detector_mask: List[bool], max_energy: float, matrix_dir: Path = Path("matrix")) -> "ResponseMatrix":
+    def from_file(cls, matrix_name: str, detector_mask: List[bool], max_energy: float, matrix_dir: Path) -> "ResponseMatrix":
         path = matrix_dir / matrix_name
         logger.debug(f"Attempting to open '{matrix_name}' @ {path}")
         energies = []
@@ -46,7 +47,7 @@ class ResponseMatrix:
                 line = line.strip()
                 if not line or line .startswith("#"):
                     continue
-                parts = line.replace(",", " ").split()
+                parts = re.split(r"[,\s]+", line.strip())
 
                 #Find first non-numeric start, drop any leading labels
                 while parts and not parts[0].replace(".", "", 1).replace("E", "", 1).replace("+", "", 1).replace("-", "", 1).isdigit():
@@ -60,28 +61,29 @@ class ResponseMatrix:
                 if len(vals) != len(detector_mask):
                     raise ValueError(f"Matrix file '{matrix_name}' has {len(vals)} cols; expected {len(detector_mask)} detectors")
                 
-                if e <= max_energy:
-                    energies.append(e)
-                    rows.append([v for v, use in zip(vals, detector_mask) if use])
-                else:
-                    break
+                # always collect the full file, just remember which bins are in‐range
+                energies.append(e)
+                rows.append([v for v, use in zip(vals, detector_mask) if use])
+
         if not energies:
             raise ValueError(f"No bins ≤ max_energy={max_energy} in {matrix_name}")
         
         #Staying consistent with the perl logic, remove the last bin
-        num_bins = len(energies)-1
-        logger.debug(f"loaded {len(energies)} bins; using first {num_bins}")
+        num_bins = 0
+        for idx, e in enumerate(energies, start=1):
+            if e <= max_energy:
+                num_bins = idx
+        # Perl then does “if the last endpoint was ≤ max, drop one more bin”
+        if energies and energies[-1] <= max_energy:
+            num_bins -= 1
 
-        e_end = np.array(energies)
-        mat = np.array(rows)[:num_bins, :]
-
+        raw_eend = np.array(energies, dtype=float)
+        raw_mat = np.array(rows, dtype=float)
+        
         #Further trim away any trailing zero sum bins
-        sums = mat.sum(axis=1)
-        zero_idxs = np.where(sums == 0)[0]
-        if zero_idxs.size:
-            cutoff = zero_idxs[0]
-            logger.debug(f"zero-sum detected at bin {cutoff}, trimming")
-            mat = mat[:cutoff, :]
-            e_end = e_end[:cutoff]
-            num_bins = cutoff
-        return cls(e_end=e_end, mat=mat, num_bins=num_bins)
+        for i in range(1, num_bins):
+            if raw_mat[i].sum() == 0:
+                num_bins = i - 1
+                break
+
+        return cls(e_end=raw_eend, mat=raw_mat, num_bins=num_bins)

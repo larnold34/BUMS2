@@ -2,74 +2,125 @@
 #Both have been combined here just for simplicity
 from math import log, exp
 from typing import List, Callable, Optional
-import bisect
 
 # #This first calls will be the python version of IntervalSearch
+# class IntervalSearch:
+#     _last = 0
+
+#     @staticmethod
+#     def search(x, sequence):
+#         n = len(sequence)
+#         # Empty sequence
+#         if n == 0:
+#             return -1
+
+#         # Single‐point sequence
+#         if n == 1:
+#             IntervalSearch._last = 0
+#             return 0 if x >= sequence[0] else -1
+
+#         # x below first
+#         if x < sequence[0]:
+#             IntervalSearch._last = 0
+#             return -1
+
+#         # x at or above last
+#         if x >= sequence[-1]:
+#             IntervalSearch._last = n - 1
+#             return n - 1
+
+#         # Start from last result (for locality)
+#         ilo = IntervalSearch._last
+#         if ilo > n - 2:
+#             ilo = n - 2
+#         ihi = ilo + 1
+
+#         # ======= doubling phase downwards =======
+#         step = 1
+#         while x < sequence[ilo]:
+#             ihi = ilo
+#             ilo = max(0, ilo - step)
+#             if ilo == 0:
+#                 break
+#             step *= 2
+
+#         # ======= doubling phase upwards =======
+#         step = 1
+#         while x >= sequence[ihi]:
+#             ilo = ihi
+#             ihi = min(n - 1, ihi + step)
+#             if ihi == n - 1:
+#                 break
+#             step *= 2
+
+#         # ======= bisection phase =======
+#         # at this point sequence[ilo] <= x < sequence[ihi]
+#         max_iters = n.bit_length() + 2
+#         for _ in range(max_iters):
+#             middle = (ilo + ihi) // 2
+#             if middle == ilo:
+#                 IntervalSearch._last = ilo
+#                 return ilo
+#             if x < sequence[middle]:
+#                 ihi = middle
+#             else:
+#                 ilo = middle
+
+#         # fallback if something odd happened
+#         IntervalSearch._last = ilo
+#         return ilo
 class IntervalSearch:
-    _last = 0
+    def __init__(self):
+        self._last = 0
 
-    @staticmethod
-    def search(x, sequence):
-        n = len(sequence)
-        # Empty sequence
+    def search(self, x: float, seq: List[float]) -> int:
+        n = len(seq)
         if n == 0:
+            self._last = 0
             return -1
-
-        # Single‐point sequence
         if n == 1:
-            IntervalSearch._last = 0
-            return 0 if x >= sequence[0] else -1
+            self._last = 0
+            return 0 if x >= seq[0] else -1
 
-        # x below first
-        if x < sequence[0]:
-            IntervalSearch._last = 0
+        # below first?
+        if x < seq[0]:
+            self._last = 0
             return -1
+        # at or above last?
+        if x >= seq[-1]:
+            self._last = n - 1
 
-        # x at or above last
-        if x >= sequence[-1]:
-            IntervalSearch._last = n - 1
-            return n - 1
-
-        # Start from last result (for locality)
-        ilo = IntervalSearch._last
-        if ilo > n - 2:
-            ilo = n - 2
+        # start from last
+        ilo = min(self._last, n-2)
         ihi = ilo + 1
 
-        # ======= doubling phase downwards =======
+        # doubling down
         step = 1
-        while x < sequence[ilo]:
-            ihi = ilo
-            ilo = max(0, ilo - step)
+        while x < seq[ilo]:
+            ihi, ilo = ilo, max(0, ilo - step)
             if ilo == 0:
                 break
             step *= 2
 
-        # ======= doubling phase upwards =======
+        # doubling up
         step = 1
-        while x >= sequence[ihi]:
-            ilo = ihi
-            ihi = min(n - 1, ihi + step)
-            if ihi == n - 1:
+        while x >= seq[ihi]:
+            ilo, ihi = ihi, min(n-1, ihi + step)
+            if ihi == n-1:
                 break
             step *= 2
 
-        # ======= bisection phase =======
-        # at this point sequence[ilo] <= x < sequence[ihi]
-        max_iters = n.bit_length() + 2
-        for _ in range(max_iters):
-            middle = (ilo + ihi) // 2
-            if middle == ilo:
-                IntervalSearch._last = ilo
+        # bisection between ilo..ihi
+        while True:
+            mid = (ilo + ihi) // 2
+            if mid == ilo:
+                self._last = ilo
                 return ilo
-            if x < sequence[middle]:
-                ihi = middle
+            if x < seq[mid]:
+                ihi = mid
             else:
-                ilo = middle
+                ilo = mid
 
-        # fallback if something odd happened
-        IntervalSearch._last = ilo
-        return ilo
 
 
 #This next class will be the python version of Interpolate.pm
@@ -107,7 +158,7 @@ class Interpolator:
     
     @staticmethod
     def constant(x: float, X: List[float], Y: List[float]) -> float:
-        j = IntervalSearch.search(x, X)
+        j = IntervalSearch().search(x, X)
         if j < 0:
             return Y[0]
         if j >= len(Y):
@@ -116,7 +167,7 @@ class Interpolator:
     
     @staticmethod
     def linear(x: float, X: List[float], Y: List[float]) -> float:
-        j = IntervalSearch.search(x, X)
+        j = IntervalSearch().search(x, X)
         j = max(0, min(j, len(X)-2))
         k = j + 1
         slope = (Y[k]-Y[j]) / (X[k]-X[j])
@@ -124,15 +175,20 @@ class Interpolator:
     
     @staticmethod
     def log_linear(x: float, X: List[float], Y: List[float]) -> float:
-        j = IntervalSearch.search(x, X)
-        j = max(0, min(j, len(X)-2))
+        j = IntervalSearch().search(x, X)
+        if j < 0:
+            # below X[0]
+            return Y[0]
+        if j >= len(X)-1:
+            # at or beyond X[-1]
+            return Y[-1]
         k = j + 1
         slope = (Y[k]-Y[j]) / (log(X[k])-log(X[j]))
         return slope*(log(x) - log(X[j])) + Y[j]
     
     @staticmethod
     def linear_log(x: float, X: List[float], Y: List[float]) -> float:
-        j = IntervalSearch.search(x, X)
+        j = IntervalSearch().search(x, X)
         j = max(0, min(j, len(X)-2))
         k = j + 1
         slope = (log(Y[k])-log(Y[j])) / (X[k]-X[j])
@@ -140,7 +196,7 @@ class Interpolator:
     
     @staticmethod
     def log_log(x: float, X: List[float], Y: List[float]) -> float:
-        j = IntervalSearch.search(x, X)
+        j = IntervalSearch().search(x, X)
         j = max(0, min(j, len(X)-2))
         k = j + 1
         slope = (log(Y[k])-log(Y[j])) / (log(X[k])-log(X[j]))
@@ -150,7 +206,7 @@ class Interpolator:
     def robust(x: List[float], X: List[float], Y: List[float], dY: List[float]=None) -> float:
         if dY is None:
             dY = Interpolator.derivatives(X,Y)
-        j = IntervalSearch.search(x, X)
+        j = IntervalSearch().search(x, X)
         j = max(0, min(j, len(X)-2))
         k = j + 1
 

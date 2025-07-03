@@ -10,7 +10,7 @@ class maxiet:
         self.tempij = cfg.tempij
         self.tempi = cfg.tempi
         self.shape = cfg.shape
-        self.pertmp = cfg.pertubation
+        self.pertmp = cfg.perturbation
         self.perslp = cfg.perslp
         self.perthm = cfg.perthm
         self.pere = cfg.pere
@@ -28,7 +28,8 @@ class maxiet:
             bce: np.ndarray,
             aleth: np.ndarray,
             errbce: np.ndarray,
-            whtbce: np.ndarray
+            whtbce: np.ndarray,
+            out
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         #The 5 nested loops will be made in sequence through various functions
         #The overall structure is as follows:
@@ -54,20 +55,22 @@ class maxiet:
         slope_best = slope_i
         therm_best = therm_i
 
-        print("-"*80)
-        print("Running MAXIET fit algorithm.")
-        print("Temp  Shape HGTE    SLOPE  THERM    ERROR")
-        print("----  ----- ------  -----  ------   ------\n")
+        print("-"*80, file=out)
+        print("Running MAXIET fit algorithm.", file=out)
+        print("Temp  Shape HGTE    SLOPE  THERM    ERROR", file=out)
+        print("----  ----- ------  -----  ------   ------", file=out)
 
+        a4 = 1
         # ─── LEVEL 1 LOOP ─────────────────────────────────────────────────────────
-        while True:
+        while a4 > 0.5:
             slpmin = self.slpmin
             slpmax = self.slpmax
-            err_trial = np.inf
+            errore = np.inf
             temp = self.tempi
-            err_best = err_trial
+            errorm = errore
+            test2 = True
             # ─── LEVEL 2 LOOP ─────────────────────────────────────────────────────────
-            while True:
+            while test2:
                 slope = slope_i
                 therm = therm_i
                 spmx = 0.0
@@ -76,10 +79,9 @@ class maxiet:
                 splmax, spmx = self._compute_maxwellian(ce, temp, spmx)
 
                 #Calculate 1/E spectrum
-                err_iter = np.inf
                 errore = np.inf
                 hgte = spmx * self.pere
-                errort = err_iter
+                errort = np.inf
                 hgte = hgte / self.pere
 
                 #Build and fit the 1/E + Maxwellian spectrum
@@ -90,8 +92,7 @@ class maxiet:
                                                                                     splmax, 
                                                                                     hgte, 
                                                                                     slope, 
-                                                                                    therm, 
-                                                                                    hgte, 
+                                                                                    therm,  
                                                                                     errort, 
                                                                                     errore, 
                                                                                     slpmax)
@@ -101,12 +102,13 @@ class maxiet:
 
                 #Write best values of fit to terminal
                 print(
-                    f"{temp:>4.2f}"
-                    f"{self.shape:>4.2f}"
-                    f"{hgte:>6.4f}"
-                    f"{slope_e:>4.2f}"
-                    f"{therm_e:>7.3f}"
-                    f"{perror:>7.3f}"
+                    f"{temp:>4.2f}  "
+                    f"{self.shape:>4.2f} "
+                    f"{hgte:>6.4f}    "
+                    f"{slope_e:>4.2f}  "
+                    f"{therm_e:>7.3f}    "
+                    f"{perror:>7.3f}",
+                    file=out
                 )
 
                 test2 = False
@@ -124,37 +126,25 @@ class maxiet:
                         temp = temp - self.pertmp
                         if temp > self.pertmp:
                             test2 = True
-                if test2:
-                    break
+                        else:
+                            test2 = False
+                else:
+                    test2 = False
             #End of level 2
-            a1, a2, a3 = 0, 0, 0
-
-            if slope_best == slope_i and slope_i > slpmin:
-                a1 = 1
-            
-            if therm_best == therm_i and therm_i >= self.themmin:
-                a2 = 2
-
-            if tempm == self.tempi and tempm < (self.tempij + 10 * self.pertmp):
-                other = self.tempij + 10 * self.pertmp
-                a3 = 1
-            
+            a1 = int(slope_best == slope_i and slope_i > slpmin)
+            a2 = int(therm_best == therm_i and therm_i >= self.themmin)
+            a3 = int(tempm == self.tempi and tempm < (self.tempij + 10*self.pertmp))
             if self.pertmp == 0:
                 a3 = 0
-            if a1 == 1:
-                slope_i = slope_i - 10 * self.perslp
-            if a2 == 1:
-                therm_i = therm_i / self.perthm**3
-            if a3 == 1:
-                self.tempi = self.tempi + 3 * self.pertmp
-            if (a1 + a2 + a3) > 0.5:
-                continue
-            else:
-                break
+
+            if a1: slope_i -= 10*self.perslp
+            if a2: therm_i /= self.perthm**3
+            if a3: self.tempi += 3*self.pertmp
+            a4 = a1 + a2 + a3
         #end of level 1
         #Build the final spectrum
         spmx = 0.0
-        for i in range(num_groups+1):
+        for i in range(num_groups):
             splmax[i] = (ce[i]**1.5)*np.exp(-ce[i]/tempm)
             if splmax[i] > spmx:
                 spmx = splmax[i]
@@ -163,21 +153,21 @@ class maxiet:
                 if splmax[i] < splmax[i-1] * self.shape:
                     splmax[i] = splmax[i-1] * self.shape
         
-        for i in range(num_groups+1):
+        for i in range(num_groups):
             spli[i] = hgte_best * ce[i]**slope_best
         
-        for i in range(num_groups+1):
+        for i in range(num_groups):
             if spli[i] >= splmax[i]:
                 spli[i] = (spli[i]+splmax[i]*0.5)
             else:
                 isave = i
                 i = num_groups+1
 
-        for j in range(isave, num_groups+1):
+        for j in range(isave, num_groups):
             spli[j] = splmax[j]
 
         spli[0] = spli[1] * therm_best
-        return spli, splmax, bcc
+        return spli, tempm
                 
    
     #This first function will apply the actual logic within the nested loop for generating the Maxwellian
@@ -225,7 +215,7 @@ class maxiet:
 
                 spli, hgte, h = self._1overE_plus_max(ce, num_groups, slope, splmax, hgte)
 
-                for j in range(h, num_groups+1):
+                for j in range(h, num_groups):
                     spli[j] = splmax[j]
 
                 #Adjust thermal energy bin
@@ -234,7 +224,7 @@ class maxiet:
                 #Calculate sphere response and sum from spectrum
                 for m in range(num_det):
                     bcc[m] = 0
-                    for j in range(num_groups+1):
+                    for j in range(num_groups):
                         bcc[m] = bcc[m] + aleth[m, j] * spli[j]
 
 #-------------------------------------------------------------
@@ -284,7 +274,7 @@ class maxiet:
             #End of level 4
             hgte *= self.pere
 
-            #Save best fit values 
+            #Save best fit values
             if errort < errore:
                 errore = errort
                 hgtee = hgte
@@ -294,11 +284,11 @@ class maxiet:
 
             #Update the slope
             if slope < slpmax:
-                slope = slope + self.perslp
-            
+                slope += self.perslp
             if mx == 1:
                 slope = slope_e
             
+
             #Update thermal bin
             therm = therm_e * self.perthm
             test1 = False
@@ -329,11 +319,11 @@ class maxiet:
         while True: #level 5
             crossed = False
 
-            for i in range(num_groups+1):
+            for i in range(num_groups):
                 spli[i] = hgte * ce[i] ** slope
 
             #Combine the Maxwellian and the 1/E spectra
-            for i in range(num_groups+1):
+            for i in range(num_groups):
                 if spli[i] < splmax[i]:
                     h = i
                     i = num_groups+1

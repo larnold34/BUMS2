@@ -5,13 +5,14 @@ import cgi
 from pathlib import Path
 from urllib.parse import unquote
 from typing import Dict
+from types import SimpleNamespace
 
 from bums2.core.config import Bums2Config
 
 class InputParser:
 
     #This is to define a class object that will be called upon later
-    DET_NAMES = ["bare", "barecd", "2inch", "2inchcd", "3inch", "3inchcd", "5inch", "5inchcd", "8inch", "10inch", "12inch", "18inch"]
+    DET_NAMES = ["bare", "barecd", "2inch", "2inchcd", "3inch", "3inchcd", "5inch", "5inchcd", "8inch", "10inch", "12inch", "15inch", "18inch"]
 
     #The following will make it so a file input and output path is required when calling from the command line
     def __init__(self):
@@ -69,7 +70,18 @@ class InputParser:
 
         kv["input_file"] = str(args.input_file)
         kv["output_file"] = str(args.output_file)
-        return Bums2Config.from_dict(kv)
+
+        if "matrix" in kv:
+            kv["matrix_name"] = kv["matrix"]
+
+        cfg = Bums2Config.from_dict(kv)
+
+        cfg.detectors.clear()
+        for name, used, bce, err in zip(self.DET_NAMES, cfg.detector_mask, cfg.measured_counts, cfg.measured_errors):
+            if not used:
+                continue
+            cfg.detectors.append(SimpleNamespace(ball = name, bce = bce, bcc = 0.0, pcterr = 0.0))
+        return cfg
     
     #The following will parse the data if from a cgi input
     def _parse_cgi(self) -> Bums2Config:
@@ -104,7 +116,17 @@ class InputParser:
         kv["input_file"] = os.environ.get("SCRIPT_FILENAME", "")
         kv["output_file"] = ""
 
-        return Bums2Config.from_dict(kv)
+        if "matrix" in kv:
+            kv["matrix_name"] = kv["matrix"]
+
+        cfg = Bums2Config.from_dict(kv)
+
+        cfg.detectors.clear()
+        for name, used, bce, err in zip(self.DET_NAMES, cfg.detector_mask, cfg.measured_counts, cfg.measured_errors):
+            if not used:
+                continue
+            cfg.detectors.append(SimpleNamespace(ball = name, bce = bce, bcc = 0.0, pcterr = 0.0))
+        return cfg
     
     #The following will read the input and decode it since the inputs are still in URI format
     def _read_kv_file(self, path: Path) -> Dict[str,str]:

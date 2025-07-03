@@ -7,26 +7,33 @@ from typing import Sequence, List, Tuple
 class Standardize:
 
     @staticmethod
-    def scale_factor(measured: Sequence[float], response_applied: Sequence[float]) -> float:
-        
+    def scale_factor(bce: np.ndarray, errbce: np.ndarray, response: np.ndarray, num_det: float, num_grps: float, flux: np.ndarray) -> float:
         #Compute a factor f such that sum(measured_i * response_i) / sum(response_i^2)
 
-        num = sum(m * r for m, r in zip(measured, response_applied))
-        den = sum(r * r for r in response_applied)
-        if den == 0:
-            raise ValueError("Cannot compute scale factor: zero denominator")
-        return num / den
+        #The following are some fail safe checks
+        for i in range(num_det):
+            if errbce[i] == 0:
+                raise ValueError(f"Divide be zero due to {errbce[i]} being zero")
+
+        flux_sum = sum(flux)
+        if flux_sum == 0:
+            raise ValueError("Flux values all zero")
+        
+        eig = np.zeros_like(flux)
+        sum1 = sum2 = 0.0
+        for i in range(num_det):
+            for k in range(num_grps):
+                eig[i] += response[i, k] * flux[k]
+            sum1 += (bce[i] * eig[i]) / (errbce[i]**2)
+            sum2 += (eig[i]**2) / (errbce[i]**2)
+        return sum1/sum2
     
     @staticmethod
-    def chi_squared(measured: Sequence[float], model: Sequence[float], errors: Sequence[float]) -> float:
-
-        #Compute chi^2 = sum[(measured_i - model_i)^2 / error_i^2]
-
+    def chi_squared(num_det: int, bce: np.ndarray, bcc: np.ndarray, errbce: np.ndarray) -> float:
         chisq = 0.0
-        for m, c, e, in zip(measured, model, errors):
-            if e <= 0:
-                raise ValueError("All errors must be greater than 0")
-            chisq += ((m-c)**2)/ (e**2)
+        #Compute chi^2 = sum[(measured_i - model_i)^2 / error_i^2]
+        for i in range(num_det):
+            chisq += ((bce[i] - bcc[i])**2) / ((errbce[i])**2)
         return chisq
     
     @staticmethod
@@ -63,12 +70,11 @@ class Standardize:
 
 
     @staticmethod
-    def normalize( initial_spectrum: List[float], response_matrix: List[List[float]], measured_counts: List[float]) -> List[float]:
-        modeled = [
-            sum(row[j] * initial_spectrum[j] for j in range(len(initial_spectrum)))
-            for row in response_matrix
-        ]
-        sf = Standardize.scale_factor(measured_counts, modeled)
-        return [val * sf for val in initial_spectrum]
+    def normalize(bce: np.ndarray, errbce: np.ndarray, response: np.ndarray, num_det: float, num_grps: float, flux: np.ndarray) -> List[float]:
+        rnorm = Standardize.scale_factor(bce, errbce, response, num_det, num_grps, flux)
 
+        for i in range(num_grps):
+            flux[i] *= rnorm
+        
+        return flux
 

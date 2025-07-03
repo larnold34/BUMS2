@@ -16,14 +16,16 @@ class sand2:
     
     def sand2_unfold(
             self,
-            alethnew: np.ndarray,
+            mat: np.ndarray,
             bce: np.ndarray,
             errbce: np.ndarray,
             spli: np.ndarray,
+            num_groups: float,
+            num_det: float
     ) -> Tuple[np.ndarray, np.ndarray]:
         #Perform SAND2 unfolding
         #Parameters:
-        #alethnew : ndarray, shape(num_detectors, num_groups), The response matrix in terms of lethargy
+        #mat : ndarray, shape(num_detectors, num_groups)
         #bce: ndarray, shape(num_detectors,), The measured counts
         #errbce: ndarray, shape(num_detectors,), The error of the measured counts
         #spli: ndarray, shape(num_groups,), The initial spectrum
@@ -31,7 +33,6 @@ class sand2:
         #Returns:
         #spl: ndarray, shape(num_groups,), The unfolded spectrum
         #splstart: ndarray, shape(num_groups,), The initial spectrum feed into maxed
-        num_det, num_groups = alethnew.shape
         total_groups = num_groups + 1
         
         #First: write sand2/input_data
@@ -60,7 +61,7 @@ class sand2:
             fh.write(f"{self.cfg.e_end[0]}\n")
             # each subsequent row is eend[j], mat[j,i] for i in detectors
             for j in range(1, total_groups):
-                row = alethnew[:, j-1]
+                row = mat[:, j-1]
                 vals = ",".join(str(v) for v in row)
                 fh.write(f"{self.cfg.e_end[j]},{vals}\n")
 

@@ -4,16 +4,22 @@ import numpy as np
 
 from bums2.core.config import Bums2Config
 
-class Bon:
+class bon:
     def __init__(self, cfg: Bums2Config):
         self.itertesterror = cfg.itertesterror
         self.smoothing = cfg.smoothing
+        self.num_grps = cfg.num_groups
+        self.num_det = cfg.num_det
+        self._bk = np.zeros((self.num_grps, self.num_grps), dtype=float)
+        self._vect = np.zeros(self.num_grps, dtype=float)
 
     def bon_unfolding(
             self,
             alethnew: np.ndarray,
             bce: np.ndarray,
             spl_init: np.ndarray,
+            num_groups: float,
+            num_det: float,
             iter_start: int = 0
     ) -> Tuple[np.ndarray, np.ndarray, int]:
         #Perform BON unfolding
@@ -26,7 +32,6 @@ class Bon:
         #spl: ndarray, shape(num_groups,), The unfolded spectrum
         #bcc: ndarray, shape(num_detectors,), The calculated counts after unfolding
         #iter_count: int, total number of iterations performed
-        num_det, num_groups  = alethnew.shape
 
         #Initialize the outputs by copying the inputs
         spl = spl_init.copy()
@@ -35,12 +40,22 @@ class Bon:
 
         #Precompute bk and vect only once if starting fresh
         if iter_count <= 0:
-            #bk[j,i] = sum_m(alethnew[m,j]*alethnew[m,i]), which would result in a matrix shape of (num_groups, num_groups)
-            bk = alethnew.T @ alethnew
+            #Build bk exactly like perl does
+            for j in range(self.num_grps):
+                for i in range(self.num_grps):
+                    s = 0.0
+                    for m in range(self.num_det):
+                        s += alethnew[m, j] * alethnew[m, i]
+                    self._bk[j, i] = s
+            
 
-            #vect[i] = sum_m(alethnew[m,i] * bce[m])
-            vect = alethnew.T.dot(bce)
-        
+            #Build vect exactly like perl does
+            for i in range(self.num_grps):
+                s = 0.0
+                for j in range(self.num_det):
+                    s += alethnew[j, i] * bce[j]
+                self._vect[i] = s
+             
 
         #Iteration loop
         for k in range(self.itertesterror):
@@ -52,10 +67,10 @@ class Bon:
             #For each energy bin j, ax = sum_m(spl[m]*bk[j,m])
             #Enforce a similar underflow condition as spunit
             #Update spll as spll[j] = spl[j] * vect[j] / ax
-            ax = spl @ bk.T #vectorized: shape(num_groups,)
+            ax = spl @ self._bk.T #vectorized: shape(num_groups,)
             ax = np.where(ax < 1e-37, 1e-37, ax)
 
-            spll = spl * vect / ax
+            spll = spl * self._vect / ax
             spll = np.where(spll < 1e-37, 0.0, spll)
 
             #Smoothing update
@@ -67,10 +82,8 @@ class Bon:
                     new_spl[j] = (spll[j-1]*self.smoothing + spll[j] + hi*self.smoothing) / denom
                       
             # first two bins are direct
-            if num_groups >= 1:
-                new_spl[0] = spll[0]
-            if num_groups >= 2:
-                new_spl[1] = spll[1]
+            new_spl[0] = spll[0]
+            new_spl[1] = spll[1]
 
             spl = new_spl
 

@@ -1,7 +1,7 @@
 #This script will be the combination between ede.pl and dfact.pl
 #ede.pl was in charge of doing the energy to dose conversion
 #dfact.pl was in charge of doing dose conversion factor logic
-from math import log, exp
+from math import log, exp, log10
 from typing import List
 from bums2.utils.interpolate import Interpolator
 
@@ -178,12 +178,14 @@ class DoseConverter:
         if ic == 10:
             if it < 5:
                 df = self._interpolate(it, E, self._elim_n_1, self._fct_n_1)
+
             else:
                 raise ValueError(f"it={it} not supported for ic={ic}")
 
         elif ic == 20:
             if it < 5:
                 df = self._interpolate(it, E, self._elim_n_2, self._fct_n_2)
+
             elif it == 5:
                 X = log(E)
                 if (E <= 1.0e-7):
@@ -239,18 +241,26 @@ class DoseConverter:
         elif ic == 40:
             if it < 5:
                 df = self._interpolate(it, E, self._elim_n_4, self._fct_n_4)
+
             else:
                 raise ValueError(f"it={it} not supported for ic={ic}")
         else:
             raise ValueError(f"Unknown neutron ic={ic}")
+        
         
         #rem to sv conversion
         if iu == 2:
             df /= 100.0
         
         #Correction factors from dfact.pl
-        if acr < 0:
-            df *= 20.0 / (5.0 + 17.0 * exp(-((log(2.0 * E))**2)/6.0))
+        if acr == -1.0:
+            df *= 20.0 / (5.0 + 17.0*exp(-1.0*(log(2.0*E))**2/6.0))
+        elif acr == -2.0:
+            if E < 0.25:
+                df = df * 2.5
+            else:
+                X = log10(E)
+                df *= (1.4229 - 1.152*X + 0.78732*X**2 - 0.24341*X**3)
         else:
             df *= acr
         return df

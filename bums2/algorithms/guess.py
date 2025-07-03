@@ -2,6 +2,8 @@
 from pathlib import Path
 from typing import List, Tuple, Optional
 import numpy as np
+import re
+import sys
 
 from bums2.core.config import Bums2Config
 from bums2.core.standardize import Standardize
@@ -31,59 +33,70 @@ class SpectrumGuesser:
             header = fh.readline().strip()
             ends, vals = [], []
             for line in fh:
-                parts = line.strip().split()
+                parts = re.split(r"[,\s]+", line.strip())
                 if len(parts) >= 2:
                     ends.append(float(parts[0]))
                     vals.append(float(parts[1]))
         return header, np.array(ends), np.array(vals)
     
-    def guess(self) -> Tuple[str, np.ndarray]:
+    def guess(self, out) -> Tuple[str, np.ndarray]:
         #If Automatic is selected apply the original logic
-        best_file: Optional[Path]
+        chosen: None
         best_chi = np.inf
+        spli = np.zeros(self.cfg.num_groups, dtype=float)
 
-        if "Automatic" in self.cfg.start_spec:
+        if self.cfg.start_spec.upper().startswith("AUTOMATIC"):
+            print("Starting Spectra      Chi - Squared", file=out)
+            print("---------------       -----------", file=out)
+
             for spec_path in self._list_spectra():
+                #Load in name and two column data
                 header, e_end_in, val_in = self._load_spectrum(spec_path)
+                print(f"{header:20s}", end=" ", file=out)
 
-                #Rebin into matrix bins
-                spli = Rebin(
-                    old_edges= e_end_in.tolist(),
-                    old_values= val_in.tolist(),
-                    new_edges= self.cfg.e_end
+                val_in = val_in[1:]
+                #Rebin the spectrum
+                val1 = Rebin(
+                    old_edges=e_end_in,
+                    old_values=val_in,
+                    new_edges=self.cfg.e_end
                 ).transform()
 
-                #Drop the first bin
-                spli = spli[1:]
-
-                #Run the pipline
+                candidate_spli = val1[1:].copy()
+                
+                #Apply standarization pipelne
                 alethnew, prog_spl = self.standardize.trans_mat(
-                    aleth= self._response_matrix, #Will need to change after making driver
-                    spli=spli
+                    aleth= self.cfg.aleth,
+                    spli = np.array(candidate_spli, dtype=float)
                 )
 
-                #Normalize
                 norm_spl = self.standardize.normalize(
-                    initial_spectrum= prog_spl.tolist(),
-                    response_matrix= alethnew.tolist(),
-                    measured_counts= self.cfg.measured_counts,
+                    bce=self.cfg.bce,
+                    errbce=self.cfg.errbce,
+                    response=alethnew,
+                    num_det=self.cfg.num_det,
+                    num_grps=self.cfg.num_groups,
+                    flux=prog_spl
                 )
 
-                #Cal_response
-                bcc = self.standardize.cal_response(alethnew= np.array(alethnew), spl= np.array(norm_spl))
+                bcc = self.standardize.cal_response(
+                    alethnew=np.array(alethnew),
+                    spl=norm_spl
+                )
 
-                #Fit error, will need to edit when the driver is made. weights should be whtbce
-                fit_err = self.standardize.fit_error(measured= self.cfg.measured_counts, model= bcc.tolist(), weights= self.cfg.measured_errors)
 
-                #Chi squared
-                chi = self.standardize.chi_squared(measured= self.cfg.measured_counts, model= bcc.tolist(), errors= self.cfg.measured_errors)
+                chi = self.standardize.chi_squared(
+                    num_det=self.cfg.num_det,
+                    bce=self.cfg.bce,
+                    bcc=bcc.tolist(),
+                    errbce=self.cfg.errbce
+                )
 
+                print(f"{chi:11.3E}", file=out)
                 if chi < best_chi:
                     best_chi = chi
-                    best_file = spec_path
-                
-                print("-" * 80)
-                chosen = best_file
+                    chosen = spec_path
+                    spli = candidate_spli
         
         else:
             #Specified initial spectrum
@@ -91,9 +104,12 @@ class SpectrumGuesser:
 
             #Rebin the chosen spectrum only
             _, e_end2, val2 = self._load_spectrum(chosen)
-            spli2 = Rebin(
+            val2 = val2[1:]
+            full = Rebin(
                old_edges= e_end2,
                old_values= val2,
                new_edges= self.cfg.e_end
-            )[1:]
-        return chosen.name, spli2
+            ).transform()
+
+            spli = full[1:].copy()
+        return chosen, spli

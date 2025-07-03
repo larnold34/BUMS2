@@ -13,7 +13,7 @@ class Bums2Config:
     tempij:        float
     smoothing:     float
     shape:         float
-    pertubation:   float
+    perturbation:   float
     cal_factor:    float
 
     matrix_name:   str
@@ -31,8 +31,8 @@ class Bums2Config:
 
     # ——— Initialized parameters ———
     slopej: float = 0.0
-    slpmin: float = -0.2
-    slpmax: float = 0.5
+    slpmin: float = 0.0
+    slpmax: float = 0.51
     perslp: float = 0.01
     thermj: float = 1.0
     themmin: float = 0.1
@@ -53,6 +53,29 @@ class Bums2Config:
     tempi: float = field(init=False)
     slopei: float = field(init=False)
     thermi: float = field(init=False)
+
+    detectors:      List[Any]   = field(default_factory=list)
+    spc:            Optional[List[float]] = None
+    spl:            Optional[List[float]] = None
+    rem:            Optional[List[float]] = None
+    prem:           Optional[List[float]] = None
+    splstart:       Optional[List[float]] = None
+
+    num_groups:     int = field(init=False, default=0)
+    num_det:        int = field(init=False, default=0)
+
+    tempm:       float = field(init=False)
+    iter_count:  float = field(init=False)
+
+    iter_log: List[str] = field(default_factory=list)
+    rnorm: float = field(init=False, default=0.0)
+
+    ce:    Optional[List[float]] = None
+    bce: Optional[List[float]] = None
+    aleth: Optional[List[float]] = None
+    errbce: Optional[List[float]] = None
+    whtbce: Optional[List[float]] = None
+
 
     @classmethod
     def from_dict(cls, raw: Dict[str, Any]) -> "Bums2Config":
@@ -129,12 +152,15 @@ class Bums2Config:
        
         cfg = cls(**kwargs)
 
-        cfg.tstper = (len(cfg.detector_mask) * cfg.endtesterror**2) / 10000
+        cfg.tstper = (cfg.num_det * cfg.endtesterror**2) / 10000
         cfg.perthm = 1.0 + 20.0 * cfg.perslp
         cfg.pere = 1.0 + 10.0 * cfg.perslp
 
         cfg.tempi = cfg.tempij
+        cfg.tempm = cfg.tempij
         cfg.slopei = cfg.slopej
         cfg.thermi = cfg.thermj
+
+        cfg.iter_count = cfg.iter
 
         return cfg
