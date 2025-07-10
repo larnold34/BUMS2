@@ -1,0 +1,3 @@
+#This file will make sure any required python modules that need to be installed are installed
+numpy>=1.24.0
+matplotlib>=3.7.1
