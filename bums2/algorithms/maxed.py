@@ -3,14 +3,15 @@ import subprocess
 from pathlib import Path
 from typing import Tuple, List
 import numpy as np
+import contextlib
 
 from bums2.core.config import Bums2Config
+from bums2.FORTRAN_METHODS.MAXED.driver.maxed_main import MaxedPipeline
 
 class maxed:
-    def __init__(self, cfg: Bums2Config, maxed_executable: Path = Path("/usr/local/bin/maxed"), workdir: Path = Path("maxed_data"),):
+    def __init__(self, cfg: Bums2Config, workdir: Path = Path("maxed_data")):
         self.cfg = cfg
         self.e_end = self.cfg.e_end
-        self.maxed_exe = maxed_executable
         self.workdir = workdir
         self.workdir.mkdir(exist_ok=True)
 
@@ -21,7 +22,8 @@ class maxed:
             errbce: np.ndarray,
             spli: np.ndarray,
             num_groups: float,
-            num_det: float
+            num_det: float,
+            out: Path = None
     ) -> Tuple[np.ndarray, np.ndarray]:
         #Perform MAXED unfolding
         #Parameters:
@@ -64,35 +66,24 @@ class maxed:
             fh.write(f"{self.cfg.e_end[0]}\n")
 
             #Form the response matrix where each line is eend[j],value
-            for j in range(1, total_groups):
-                row = mat[j-1,:]
-                vals = ",".join(str(x) for x in row)
-                fh.write(f"{self.cfg.e_end[j]},{vals}\n")
+            for i in range(total_groups - 1):  # i = 0 to num_groups - 1
+                fh.write(f"{self.cfg.e_end[i + 1]}")  # Upper bin edge, equivalent to Perl's eend[i]
+                for j in range(num_det):
+                    fh.write(f",{mat[i][j]}")
+                fh.write("\n")
         
-        #Third: Invoke the external MAXED binaries
-        res = subprocess.run(
-            [str(self.maxed_exe)],
-            cwd=self.workdir,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=True,
-            text=True,
+        #Third: Call the maxed pipeline and find spl and splstart
+        pipeline = MaxedPipeline(
+            input_file= inp,
+            response_file= resp,
+            iqds=2,
+            iqbs=3,
         )
+        
+        with open(out, "a") as f, contextlib.redirect_stdout(f):
+            result = pipeline.run()
 
-        #Fourth: parse OUT.OUT
-        out = self.workdir / "OUT.OUT"
-        with out.open() as fh:
-            #Skip the header lines
-            fh.readline()
-            fh.readline()
-
-            spl = np.zeros(num_groups, dtype=float)
-            splstart = np.zeros(num_groups, dtype=float)
-            for j in range(num_groups):
-                line = fh.readline().strip()
-                parts = line.split()
-                
-                #Staying consistent with the perl indexing
-                spl[j] = float(parts[4])
-                splstart[j] = float(parts[3])
+        spl = result["FOUT"]
+        splstart = result["FI"]
+      
         return spl, splstart

@@ -1,7 +1,7 @@
 #This will be a python conversion of fcn.pl in the MAXED directory
 import numpy as np
 
-from bums2.MAXED.utils.NumberUtils import NumberUtils
+from bums2.FORTRAN_METHODS.MAXED.utils.NumberUtils import NumberUtils
 
 #The following class will find the objective function for MAXED's maximum entropy deoconvolution
 class ObjectiveFunction:
@@ -19,6 +19,8 @@ class ObjectiveFunction:
             d: np.ndarray,
             omega: float,
             flux: float,
+            m, 
+            nb
                  ):
         #Parameters:
         # mm : np.ndarray, shape (M, NB)
@@ -33,7 +35,7 @@ class ObjectiveFunction:
         #     Omega parameter.
         # flux : float
         #     Default-spectrum sum (FLUX).
-        self.mm = mm
+        self.mm = mm.reshape((m, nb))
         self.fi = fi
         self.s = s
         self.d = d

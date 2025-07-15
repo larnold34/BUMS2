@@ -82,31 +82,31 @@ class SummaryCalculator:
             for i in range(self.num_grp):
                 self.spl[i] *= self.spli[i]
 
-            pcterr = np.zeros_like(self.bce)
-            perror = 0.0
-            if start_spec.upper().startswith("MAXIET") or iter_count != 0:
-                #There is a line in the original that updates hgte_best as $hgtem=0.5*$hgtem/$spmx;
-                #However this is not used outside of maxiet and is not called in the output file
-                #Not sure why this is done at all, just another pointless line
-                sumerr = 0               
-                for i in range(self.num_det):
-                    pcterr[i] = 100 * (self.bcc[i] - self.bce[i]) / self.bce[i]
-                    sumerr += pcterr[i]**2
-                perror = (sumerr / self.num_det)**0.5
+        pcterr = np.zeros_like(self.bce)
+        perror = 0.0
+        if start_spec.upper().startswith("MAXIET") or iter_count != 0:
+            #There is a line in the original that updates hgte_best as $hgtem=0.5*$hgtem/$spmx;
+            #However this is not used outside of maxiet and is not called in the output file
+            #Not sure why this is done at all, just another pointless line
+            sumerr = 0               
+            for i in range(self.num_det):
+                pcterr[i] = 100 * (self.bcc[i] - self.bce[i]) / self.bce[i]
+                sumerr += pcterr[i]**2
+            perror = (sumerr / self.num_det)**0.5
 
-            #sumrad will be removed cause of below
-            sumspc = sumnta = sumrem = sumexs = sumtld = sumhan = sumntr = suma70 = 0.0
+        #sumrad will be removed cause of below
+        sumspc = sumnta = sumrem = sumexs = sumtld = sumhan = sumntr = suma70 = 0.0
             
-            spc = np.zeros(self.num_grp)
-            rem = np.zeros(self.num_grp)
-            #rad = np.zeros(self.num_grp)
-            prem = np.zeros(self.num_grp)
-            splplt = np.zeros((self.num_grp, 1))
+        spc = np.zeros(self.num_grp)
+        rem = np.zeros(self.num_grp)
+        #rad = np.zeros(self.num_grp)
+        prem = np.zeros(self.num_grp)
+        splplt = np.zeros((self.num_grp, 1))
 
-            hour_sec = 1/3600
-            for i in range(self.num_grp):
+        hour_sec = 1/3600
+        for i in range(self.num_grp):
                 
-                crem_i = self.df.dfact(
+            crem_i = self.df.dfact(
                     particle_id=1,
                     ic=40,
                     energy=self.ce[i],
@@ -115,14 +115,14 @@ class SummaryCalculator:
                     acr=hour_sec
                 )
 
-                self.spl[i] *= self.cal
-                splplt[i, self.cfg.kx-1] = self.spl[i]
-                spc[i] = self.spl[i] * self.wdleth[i]
-                sumspc += spc[i]
+            self.spl[i] *= self.cal
+            splplt[i, self.cfg.kx-1] = self.spl[i]
+            spc[i] = self.spl[i] * self.wdleth[i]
+            sumspc += spc[i]
 
-                rem[i] = crem_i * spc[i]
-                sumrem += rem[i]
-                if rem[i] < 1.0e-37: rem[i] = 0
+            rem[i] = crem_i * spc[i]
+            sumrem += rem[i]
+            if rem[i] < 1.0e-37: rem[i] = 0
 
                 #Originally rad was $rad[$i]=$crad[$i]*$spc[$i];, however $crad was never initialized anywhere in the original perl
                 #The only line that had crad in it was commentted out by the original creator as #      $crad[$i]= &ede($ce[$i]); 
@@ -134,25 +134,25 @@ class SummaryCalculator:
                 # sumrad += rad[i]
                 # if rad[i] < 1.0e-37: rad[i] = 0
 
-                sumexs += self.ce[i] * spc[i]
-                sumtld += self.ctld[i] * spc[i]
-                sumhan += self.chan[i] * spc[i]
-                sumntr += self.cnutrk[i] * rem[i]
-                sumnta += self.cnta[i] * rem[i]
-                suma70 += self.ca70[i] * spc[i]
+            sumexs += self.ce[i] * spc[i]
+            sumtld += self.ctld[i] * spc[i]
+            sumhan += self.chan[i] * spc[i]
+            sumntr += self.cnutrk[i] * rem[i]
+            sumnta += self.cnta[i] * rem[i]
+            suma70 += self.ca70[i] * spc[i]
 
-            if sumspc - spc[1] > 0:
-                aveen = (sumexs - self.ce[1] * spc[1]) / (sumspc - spc[1])
+        if sumspc - spc[1] > 0:
+            aveen = (sumexs - self.ce[1] * spc[1]) / (sumspc - spc[1])
             
-            if sumrem > 0:
-                sumtld = (sumtld/sumrem) / 4.155e6
-                sumhan = (sumhan/sumrem) / 2.085e6
-                sumntr = (sumntr/sumrem) / 0.56905
-                sumnta = (sumnta/sumrem) / 7.9607
-                suma70 = (suma70/sumrem) / 4.4079e6
+        if sumrem > 0:
+            sumtld = (sumtld/sumrem) / 4.155e6
+            sumhan = (sumhan/sumrem) / 2.085e6
+            sumntr = (sumntr/sumrem) / 0.56905
+            sumnta = (sumnta/sumrem) / 7.9607
+            suma70 = (suma70/sumrem) / 4.4079e6
 
-                for i in range(self.num_grp):
-                    prem[i] = 100 * (rem[i]/sumrem)
+            for i in range(self.num_grp):
+                prem[i] = 100 * (rem[i]/sumrem)
 
         return Summary(
                 splplt= splplt,
