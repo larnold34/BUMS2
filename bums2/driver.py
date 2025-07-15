@@ -148,12 +148,11 @@ class Bums2Driver:
         
         if "MAXED" in alg:
             spl, splstart = maxed(self.cfg).maxed_unfold(
-                self.mat, self.bce, self.errbce, spl, self.cfg.num_groups, self.cfg.num_det)
+                self.mat, self.bce, self.errbce, spl, self.cfg.num_groups, self.cfg.num_det, out_path)
             
         elif "SANDII" in alg:
             spl, splstart = sand2(self.cfg).sand2_unfold(
-                self.mat, self.bce, self.errbce, spl, self.cfg.num_groups, self.cfg.num_det)
-            
+                self.mat, self.bce, self.errbce, spl, self.cfg.num_groups, self.cfg.num_det, out_path)            
         else:
             # both BON and SPUNIT go here
             if "BON" in alg:
@@ -198,13 +197,13 @@ class Bums2Driver:
 
                     old_chi = chi
 
-            # stash final result back on the config so output.py can pick it up
-            self.bcc = bcc
-            self.cfg.iter_count = iter_count
-            self.cfg.ce = self.ce
+        # stash final result back on the config so output.py can pick it up
+        self.bcc = bcc
+        self.cfg.iter_count = iter_count
+        self.cfg.ce = self.ce
 
-            #Apply sum data logic
-            calc = SummaryCalculator(
+        #Apply sum data logic
+        calc = SummaryCalculator(
                 ce = self.ce,
                 wdleth = self.wdleth,
                 spli = spli,
@@ -219,31 +218,31 @@ class Bums2Driver:
 
             )
 
-            summary: Summary = calc.compute(
+        summary: Summary = calc.compute(
                 alg = self.cfg.alg,
                 start_spec = self.cfg.start_spec,
                 iter_count = iter,
                 tempij = self.cfg.tempij
             )
 
-            self.cfg.summary = summary
+        self.cfg.summary = summary
 
-            cfg = self.cfg
-            cfg.spc = summary.spc.tolist()
-            cfg.spl = spl.tolist()
-            cfg.rem = summary.rem.tolist()
-            cfg.prem = summary.prem.tolist()
-            cfg.splstart = splstart.tolist()
-            cfg.pcterr = summary.pcterr.tolist()
+        cfg = self.cfg
+        cfg.spc = summary.spc.tolist()
+        cfg.spl = spl.tolist()
+        cfg.rem = summary.rem.tolist()
+        cfg.prem = summary.prem.tolist()
+        cfg.splstart = splstart.tolist()
+        cfg.pcterr = summary.pcterr.tolist()
 
             
 
-            for det, bcc_val, pct in zip(cfg.detectors, bcc, summary.pcterr):
-                det.bcc = bcc_val
-                det.pcterr = pct
+        for det, bcc_val, pct in zip(cfg.detectors, bcc, summary.pcterr):
+            det.bcc = bcc_val
+            det.pcterr = pct
         
-            #Call the ouput file
-            CLIFormatter().render(cfg, out_path)
+        #Call the ouput file
+        CLIFormatter().render(cfg, out_path)
         
 
 if __name__ == "__main__":

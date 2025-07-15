@@ -4,13 +4,14 @@ import time
 from pathlib import Path
 from typing import Tuple
 import numpy as np
+import contextlib
 
 from bums2.core.config import Bums2Config
+from bums2.FORTRAN_METHODS.SAND2.sand2_main import Sand2Pipeline
 
 class sand2:
-    def __init__(self, cfg: Bums2Config, sand2_exectable: Path = Path("/usr/local/bin/sand2"), workdir: Path = Path("sand2")):
+    def __init__(self, cfg: Bums2Config, workdir: Path = Path("sand2")):
         self.cfg = cfg
-        self.sand2_exe = sand2_exectable
         self.workdir = workdir
         self.workdir.mkdir(exist_ok=True)
     
@@ -21,7 +22,8 @@ class sand2:
             errbce: np.ndarray,
             spli: np.ndarray,
             num_groups: float,
-            num_det: float
+            num_det: float,
+            out: Path = None
     ) -> Tuple[np.ndarray, np.ndarray]:
         #Perform SAND2 unfolding
         #Parameters:
@@ -49,7 +51,7 @@ class sand2:
             fh.write(f"{self.cfg.e_end[num_groups]},0\n")
             # fixed control lines
             fh.write("2,3\n")
-            # itrmax,1,1  (SANDII wants max‐iterations and two flags)
+            # itrmax,1,1 (max iterations, chi_fac, dev)
             fh.write(f"{self.cfg.iter},1,1\n")
 
         #Second: write sand2/response
@@ -60,34 +62,25 @@ class sand2:
             fh.write("cm**2\n")
             fh.write(f"{self.cfg.e_end[0]}\n")
             # each subsequent row is eend[j], mat[j,i] for i in detectors
-            for j in range(1, total_groups):
-                row = mat[:, j-1]
-                vals = ",".join(str(v) for v in row)
-                fh.write(f"{self.cfg.e_end[j]},{vals}\n")
+            for i in range(total_groups - 1):  # i = 0 to num_groups - 1
+                fh.write(f"{self.cfg.e_end[i + 1]}")  # Upper bin edge, equivalent to Perl's eend[i]
+                for j in range(num_det):
+                    fh.write(f",{mat[i][j]}")
+                fh.write("\n")
 
-        #Third: invoke the external SANDII binary
-        subprocess.run(
-            [str(self.sand2_exe)],
-            cwd=self.workdir,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=True,
-            text=True,
+        #Third: call the sand2 pipline to find spl and splstart
+        pipeline = Sand2Pipeline(
+            input_file= inp,
+            response_file= resp,
+            iqds= 2,
+            iqbs= 3,
+            max_iter= self.cfg.iter,
         )
 
+        with open(out, "a") as f, contextlib.redirect_stdout(f):
+            result = pipeline.run()
 
-        #Fourth: parse sand2/OUT.SII
-        outfi = self.workdir / "OUT.SII"
-        spl = np.zeros(num_groups, dtype=float)
-        splstart = np.zeros(num_groups, dtype=float)
-        with outfi.open() as fh:
-            # skip two header lines
-            next(fh)
-            next(fh)
-            for j in range(num_groups):
-                parts = fh.readline().split()
-                # 4th field is splstart, 5th is spl
-                splstart[j] = float(parts[3])
-                spl[j]      = float(parts[4])
+        spl = result["FSNEW"]
+        splstart = result["FI"]
 
         return spl, splstart
