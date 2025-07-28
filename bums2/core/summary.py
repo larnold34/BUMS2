@@ -96,7 +96,6 @@ class SummaryCalculator:
 
         #sumrad will be removed cause of below
         sumspc = sumnta = sumrem = sumexs = sumtld = sumhan = sumntr = suma70 = 0.0
-        print(f"DEBUG: spl before summation for summary = {self.spl}")
         spc = np.zeros(self.num_grp)
         rem = np.zeros(self.num_grp)
         #rad = np.zeros(self.num_grp)

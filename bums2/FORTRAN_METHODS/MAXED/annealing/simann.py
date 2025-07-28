@@ -174,8 +174,6 @@ class SimulatedAnnealingRunner:
         except RuntimeError as e:
             print("\nWARNING: Optimization did not converge", e)
             XOPT = sa.XOPT
-        print(">>> Simulated annealing finished")
-        print(f"First 5 XOPT: {[round(x, 4) for x in XOPT[:5]]}")
 
         print("  ****   RESULTS AFTER SA   ****   ")
         VectorPrinter.print_vector("SOLUTION", XOPT)
