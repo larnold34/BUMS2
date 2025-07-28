@@ -97,14 +97,14 @@ from bums2.FORTRAN_METHODS.MAXED.annealing.prtvec import VectorPrinter
 
 class SimulatedAnnealingRunner:
     def __init__(self, N, M, NB, MM, FI, S, D, OMEGA, FLUX, T=1.0, RT=0.9, EPS=1e-6, NS=20, NT=5,
-                 NEPS=4, MAXEVL=100_000, ISEED1=1, ISEED2=2, IPRINT=0, MAX=True):
+                 NEPS=4, MAXEVL=100, ISEED1=1, ISEED2=2, IPRINT=1, MAX=True):
         self.N = N
         self.M = M
         self.NB = NB
-        self.MM = np.array(MM)
-        self.FI = np.array(FI)
-        self.S = np.array(S)
-        self.D = np.array(D)
+        self.MM = np.asarray(MM, dtype=np.float64)
+        self.FI = np.asarray(FI, dtype=np.float64)
+        self.S = np.asarray(S, dtype=np.float64)
+        self.D = np.asarray(D, dtype=np.float64)
         self.OMEGA = OMEGA
         self.FLUX = FLUX
 
@@ -122,7 +122,7 @@ class SimulatedAnnealingRunner:
         self.MAX = MAX
 
         # Optimization vectors
-        self.X = [0.0] * N
+        self.X = np.zeros(N, dtype=np.float64)
         self.VM = [1.0] * N
         self.LB = [-1e25] * N
         self.UB = [1e25] * N
@@ -174,6 +174,8 @@ class SimulatedAnnealingRunner:
         except RuntimeError as e:
             print("\nWARNING: Optimization did not converge", e)
             XOPT = sa.XOPT
+        print(">>> Simulated annealing finished")
+        print(f"First 5 XOPT: {[round(x, 4) for x in XOPT[:5]]}")
 
         print("  ****   RESULTS AFTER SA   ****   ")
         VectorPrinter.print_vector("SOLUTION", XOPT)

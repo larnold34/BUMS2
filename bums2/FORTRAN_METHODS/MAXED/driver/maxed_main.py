@@ -41,6 +41,8 @@ from bums2.FORTRAN_METHODS.MAXED.bins.mkebins4pd import LogEnergyBinsPD
 from bums2.FORTRAN_METHODS.MAXED.bins.fillfil import SpectrumBinFiller
 from bums2.FORTRAN_METHODS.MAXED.bins.responsel import ResponseMapper
 from bums2.FORTRAN_METHODS.MAXED.spec_scaling.scaling import SpectrumScaler
+from bums2.FORTRAN_METHODS.MAXED.bins.rebinffl import rebin_ffl
+
 
 class MaxedPipeline:
     def __init__(self, input_file, response_file, t=1.0, iqds=1, iqbs=3, rt=0.85):
@@ -81,13 +83,13 @@ class MaxedPipeline:
 
         M = inp["M"]
         N0 = inp["N0"]
-        RFN = np.array(inp["RFN"])
-        D = np.array(inp["D"])
-        S = np.array(inp["S"])
-        ENBZKL = np.array(inp["ENBZKL"])
-        ZKL = np.array(inp["ZKL"])
-        ENBR = np.array(rsp["ENBR"])
-        RES = np.array(rsp["RES"])
+        RFN = np.asarray(inp["RFN"], dtype=np.int64)
+        D = np.asarray(inp["D"], dtype=np.float64)
+        S = np.asarray(inp["S"], dtype=np.float64)
+        ENBZKL = np.asarray(inp["ENBZKL"], dtype=np.float64)
+        ZKL = np.asarray(inp["ZKL"], dtype=np.float64)
+        ENBR = np.asarray(rsp["ENBR"], dtype=np.float64)
+        RES = np.asarray(rsp["RES"], dtype=np.float64)
 
         
 
@@ -111,7 +113,7 @@ class MaxedPipeline:
         elif self.IQBS == 0:
             ENBF, _ = MergedEnergyBins(ENBZKL, ENBR, N0 + len(ENBR)).merge_and_filter()
 
-        ENBF = np.array(ENBF)
+        ENBF = np.asarray(ENBF, dtype=np.float64)
         N = len(ENBF)
         NB = N -1
 
@@ -132,7 +134,7 @@ class MaxedPipeline:
 
 
         FLUX = FI.sum()
-        MM = B.flatten(order="C").tolist()
+        MM = B.T.flatten(order="F").tolist()
 
         #Run simulated annealing
         # print(f"Running SIMANN optimization with T={self.T}, RT={self.RT}")
@@ -149,27 +151,53 @@ class MaxedPipeline:
         print(f" TOTAL NEUTRON FLUENCE RATE/DEFAULT SPECTRUM  = {FLUX:.6f}\n")
         print(f" TOTAL NEUTRON FLUENCE RATE/SOLUTION SPECTRUM = {FOUT.sum():.6f}")
 
-        fil, fl = SpectrumScaler(MM, FI, ENBF).lethargy_normalize(FI, FOUT)
+        fil, fl = SpectrumScaler(MM, FI, ENBF).lethargy_normalize(FOUT)
 
-        #Chi-squared values after rebinning
-        c1 = np.sum(((D - (B @ fil))**2) / (S ** 2))
+        
+        # Rebin solution spectrum (in lethargy units) to default-spectrum bins
+        fbds, fbdsl, c1 = rebin_ffl(
+            fl_leth=fl,
+            enbf=ENBF,
+            target_edges=ENBZKL,
+            d=D,
+            s=S,
+            B=B,
+            fortran_fidelity=True  # preserve legacy behavior
+            )
+
         print(" CHI SQUARE AFTER REBINNING TO THE BIN STRUCTURE OF THE")
         print(f" DEFAULT SPECTRUM            = {c1:.10f}")
 
-        c3 = np.sum(((D - (B @ fl))**2) / (S ** 2))
+        # Rebin solution spectrum to response-function bins
+        fbrf, fbrfl, c3 = rebin_ffl(
+            fl_leth=fl,
+            enbf=ENBF,
+            target_edges=ENBR,
+            d=D,
+            s=S,
+            B=B,
+            fortran_fidelity=True
+            )
+
         print(" CHI SQUARE AFTER REBINNING TO THE BIN STRUCTURE OF THE")
         print(f" RESPONSE FUNCTION           = {c3:.10f}")
 
         self.result = {
-           "FI": FI,
-           "FOUT": FOUT,
-           "FIL": fil,
-           "FL": fl,
-           "LAMBDA": lambdas,
-           "CHI_DEFAULT": chi_default,
-           "CHI_MAXENT": chi_maxent,
-           "FLUX_DEFAULT": FI.sum(),
-           "FLUX_SOLUTION": FOUT.sum() 
+        "FI": FI,
+        "FOUT": FOUT,
+        "FIL": fil,
+        "FL": fl,
+        "FBDS": fbds,
+        "FBDSL": fbdsl,
+        "FBRF": fbrf,
+        "FBRFL": fbrfl,
+        "LAMBDA": lambdas,
+        "CHI_DEFAULT": chi_default,
+        "CHI_MAXENT": chi_maxent,
+        "CHI_REBIN_DEFAULT": c1,
+        "CHI_REBIN_RESPONSE": c3,
+        "FLUX_DEFAULT": FI.sum(),
+        "FLUX_SOLUTION": FOUT.sum(),
         }
 
         return self.result

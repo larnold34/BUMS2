@@ -83,7 +83,7 @@ class maxed:
         with open(out, "a") as f, contextlib.redirect_stdout(f):
             result = pipeline.run()
 
-        spl = result["FOUT"]
-        splstart = result["FI"]
+        spl = result["FL"]
+        splstart = result["FIL"]
       
         return spl, splstart

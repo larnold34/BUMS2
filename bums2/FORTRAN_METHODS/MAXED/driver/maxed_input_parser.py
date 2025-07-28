@@ -37,6 +37,14 @@ class MaxedInputParser:
             e, z = map(float, lines[i].split(","))
             self.input_data['ENBZKL'].append(e)
             self.input_data['ZKL'].append(z)
+        
+        # Parse IQ and IQ2
+        iq_line = lines[M+1+N0]
+        self.input_data['IQ'], self.input_data['IQ2'] = map(int, iq_line.split(","))
+
+        # Parse T and RT
+        t_line = lines[M+2+N0]
+        self.input_data['T'], self.input_data['RT'] = map(float, t_line.split(","))
 
     def _parse_response_file(self):
         with open(self.response_path, "r") as f:

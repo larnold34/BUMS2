@@ -93,8 +93,5 @@ class spunit:
                     total += alethnew[m, j] * spl[j]
                 bcc[m] = total
 
-            # DEBUG: print final spectrum and response
-            # print(f"[DEBUG Py] final spl (len={len(spl)}) = {spl!r}")
-            # print(f"[DEBUG Py] final bcc (len={len(bcc)}) = {bcc!r}")
         return spl, bcc, iter_count
         

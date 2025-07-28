@@ -35,21 +35,31 @@ class ObjectiveFunction:
         #     Omega parameter.
         # flux : float
         #     Default-spectrum sum (FLUX).
-        self.mm = mm.reshape((m, nb))
-        self.fi = fi
-        self.s = s
-        self.d = d
-        self.omega = omega
-        self.flux = flux
+        self.mm = mm
+        self.fi = fi.astype(np.float64)
+        self.s = s.astype(np.float64)
+        self.d = d.astype(np.float64)
+        self.omega = float(omega)
+        self.flux = float(flux)
+        self.m = int(m)
+        self.nb = int(nb)
     
     def __call__(self, lambdas: np.ndarray) -> float:
         #Compute exponent vector for each bin j
+        lambdas = np.asarray(lambdas, dtype=np.float64)
         #exponent[j] = -sum_i(lambdas[i] * mm[i, j])
-        exponent = -np.tensordot(lambdas, self.mm, axes=(0,0))
-
+        # exponent = -np.tensordot(lambdas, self.mm, axes=(0,0))
         #Verify that the exponent is safe
-        exp_vals = np.array([NumberUtils.exprep(x) for x in exponent])
-        sum1 = np.dot(self.fi, exp_vals)
+        # exp_vals = np.array([NumberUtils.exprep(x) for x in exponent])
+        # sum1 = np.dot(self.fi, exp_vals)
+
+        sum1 = 0.0
+        for j in range(self.nb):
+            sum2 = 0.0
+            for i in range(self.m):
+                idx = self.nb * i + j
+                sum2 += lambdas[i] * self.mm[idx]
+            sum1 += self.fi[j] * NumberUtils.exprep(-sum2)
 
         #sum3 = sum_i(s[i] * lambdas)**2
         sum3 = np.sum((self.s * lambdas) ** 2)

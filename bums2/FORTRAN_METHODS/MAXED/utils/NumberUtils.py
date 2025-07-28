@@ -1,5 +1,6 @@
 #This file will consist of a class that applies the same logic from exprep, ranmar and rmarin from the MAXED directory
 import math
+import numpy as np
 
 class NumberUtils:
     #  This subroutine and the next function generate random numbers. See
@@ -20,33 +21,34 @@ class NumberUtils:
             raise ValueError("Seed1 must be 0..31328 and Seed2 must be 0..30081")
         
         #Initialize
-        self.U = [0.0] * 98
-        self.C = 362436.0 / 16777216.0
-        self.CD = 7654321.0 / 16777216.0
-        self.CM = 16777213.0 / 16777216.0
-        self.I97 = 97
-        self.J97 = 33
+        self.U = np.zeros(97, dtype=np.float64)
+        self.C = np.float64(362436.0 / 16777216.0)
+        self.CD = np.float64(7654321.0 / 16777216.0)
+        self.CM = np.float64(16777213.0 / 16777216.0)
+        self.I97 = 96
+        self.J97 = 32
 
         IJ = seed1
         KL = seed2
 
-        i = (IJ // 177) % 177 + 2
-        j = (IJ // 177) + 2
-        k = (KL // 169) % 178 + 1
-        l = (KL // 169)
+        i = np.int64((IJ // 177) % 177 + 2)
+        j = np.int64((IJ % 177) + 2)
+        k = np.int64((KL // 169) % 178 + 1)
+        l = np.int64((KL % 169))
 
-        for ii in range(1, 98):
+
+        for ii in range(97):
             s = 0.0
             t = 0.5
             for jj in range(1, 25):
-                m = ((i * j) % 179 * k) % 179
-                m = (m * k) % 179
+                m = np.int64((np.int64(i * j) % 179))
+                m = np.int64((np.int64(m * k) % 179))
                 i, j, k = j, k, m
-                l = (53 * l  + 1) % 169
+                l = np.int64((53 * l + 1) % 169)
                 if ((l*m) % 64) >= 32:
                     s += t
                 t *= 0.5
-            self.U[ii] = s
+            self.U[ii] = np.float64(s)
 
     def RANMAR(self) -> float:
         uni = self.U[self.I97] - self.U[self.J97]
@@ -57,11 +59,11 @@ class NumberUtils:
         self.I97 = self.I97 - 1
 
         if self.I97 == 0:
-            self.I97 = 97
+            self.I97 = 96
         self.J97 = self.J97 - 1
 
         if self.J97 == 0:
-            self.J97 = 97
+            self.J97 = 96
         self.C = self.C - self.CD
 
         if self.C < 0.0:
@@ -74,10 +76,10 @@ class NumberUtils:
 
     @staticmethod
     def exprep(rdum: float) -> float:
-        #Avoids unfer/overflow on modern IEEE floats
-        if rdum > 700.0:
-            return float('inf')
-        elif rdum < -745.0:
+        #Avoids underflow and overflow in accordance with the original FORTRAN
+        if rdum > 174:
+            return 3.69e75
+        elif rdum < -180:
             return 0.0
         else:
             return math.exp(rdum)
