@@ -1,4 +1,4 @@
-#This will be the python version of sa.py
+#This will be the python version of sa.pl
 
 #      SUBROUTINE SA(N,X,MAX,RT,EPS,NS,NT,NEPS,MAXEVL,LB,UB,C,IPRINT,
         #     1              ISEED1,ISEED2,T,VM,XOPT,FOPT,NACC,NFCNEV,NOBDS,IER,
@@ -277,10 +277,10 @@ class SimulatedAnnealing:
         self.N = N
         self.M = M
         self.NB = NB
-        self.MM = np.array(MM)
-        self.FI = np.array(FI)
-        self.S = np.array(S)
-        self.D = np.array(D)
+        self.MM = np.asarray(MM, dtype=np.float64)
+        self.FI = np.asarray(FI, dtype=np.float64)
+        self.S = np.asarray(S, dtype=np.float64)
+        self.D = np.asarray(D, dtype=np.float64)
         self.OMEGA = OMEGA
         self.FLUX = FLUX
 
@@ -303,7 +303,10 @@ class SimulatedAnnealing:
         self.LB = LB
         self.UB = UB
         self.C = C
-        
+
+        self.obj_fn = ObjectiveFunction(self.MM, self.FI, self.S, self.D, self.OMEGA, self.FLUX, self.M, self.NB)
+        self.XP = np.zeros(len(self.X), dtype=np.float64)
+
     def optimize(self):
         #Run the SA optimization and return the best solution vector
         #Print initial state
@@ -317,7 +320,7 @@ class SimulatedAnnealing:
         self._initialize()
         self._first_evaluation()
         self._anneal_loop()
-        return self.XOPT
+        return self.XOPT.copy()
     
     def _initialize(self):
         #Initialize RNG, counter, history, etc...
@@ -409,7 +412,6 @@ class SimulatedAnnealing:
             self.X[:] = self.XOPT
     
     def _inner_step(self, h: int, z: int, j:int, LNOBDS: int, NUP: int, NNEW: int, NREJ: int, NDOWN: int):
-        #Perform a single trial on variable h
 
         #Propose new XP
         XP, oob = self._propose(h, z, j, LNOBDS)
@@ -418,12 +420,13 @@ class SimulatedAnnealing:
         #Evaluate
         f_new = self._evaluate(XP)
 
-        #Accept the new point if the function value increases.
+      #Accept the new point if the function value increases.
         if f_new >= self.F:
             #Accepted
             if self.IPRINT >= 3:
                 print("POINT ACCEPTED")
-            self.X, self.F = XP, f_new
+            self.X[:] = XP
+            self.F = f_new
             self.NACC += 1
             self.NACP[h] += 1
             NUP += 1
@@ -433,7 +436,7 @@ class SimulatedAnnealing:
                 if self.IPRINT >= 3:
                     print("NEW OPTIMUM")
                 self.FOPT = f_new
-                self.XOPT = XP.copy()
+                self.XOPT[:] = XP
                 NNEW += 1
 
         #If the point is lower, use the Metropolis criteria to decide on acceptance or rejection.
@@ -443,15 +446,21 @@ class SimulatedAnnealing:
              if pp < p:
                   if self.IPRINT >= 3:
                        SAReporter.prt6(self.MAX)
-                  self.X, self.F = XP, f_new
+                  self.X[:] = XP
+                  self.F = f_new
                   self.NACC += 1
                   self.NACP[h] += 1
                   NDOWN += 1
-                  
+                  if f_new > self.FOPT:
+                    if self.IPRINT >= 3:
+                        print("NEW OPTIMUM")
+                    self.FOPT = f_new
+                    self.XOPT[:] = XP
+                    NNEW += 1  
              else:
                  if self.IPRINT >= 3:
-                     NREJ += 1
                      SAReporter.prt7(self.MAX)
+                 NREJ += 1
         return NUP, NNEW, NREJ, NDOWN
                      
                      
@@ -461,7 +470,8 @@ class SimulatedAnnealing:
         for i in range(self.N):
             if i == h:
                 #Build the trial XP for the variable h
-                delta = (self.rng.RANMAR() * 2 - 1) * self.VM[h]
+                PP_gen = self.rng.RANMAR()
+                delta = (PP_gen * 2 - 1) * self.VM[h]
                 XP[i] += delta
                 oob = False
             else:
@@ -469,8 +479,8 @@ class SimulatedAnnealing:
 
             #Out of bounds?
             if XP[i] < self.LB[i] or XP[i] > self.UB[i]:
-                print(f"XP={XP[i]}  Z={z} J={j} H={h} I={i}\n")
-                XP[i] = self.LB[i] + (self.UB[i] - self.LB[i]) * self.rng.RANMAR()
+                PP_bounds = self.rng.RANMAR()
+                XP[i] = self.LB[i] + (self.UB[i] - self.LB[i]) * PP_bounds
                 LNOBDS += 1
                 self.NOBDS += 1
                 oob = True
@@ -480,24 +490,14 @@ class SimulatedAnnealing:
     
     def _evaluate(self, X: List[float]) -> float:
         #Compute f(x), handling maximizing or minimizing
-        f = ObjectiveFunction(
-            mm= self.MM,
-            fi= self.FI,
-            s= self.S,
-            d= self.D,
-            omega= self.OMEGA,
-            flux= self.FLUX,
-            m= self.M,
-            nb= self.NB
-        )
-        result = f(X)
+        result = self.obj_fn(X)
 
         if not self.MAX:
             result = -result
         
         self.NFCNEV += 1
         if self.IPRINT >= 3:
-            SAReporter.prt4(self.MAX, self.XP, X, self.F, f)
+            SAReporter.prt4(self.MAX, self.XP, X, self.F, self.obj_fn)
 
         if self.NFCNEV >= self.MAXEVL:
             SAReporter.prt5()
@@ -505,7 +505,7 @@ class SimulatedAnnealing:
             raise RuntimeError("Exceeded maximum function evaluations")
         return result
          
-    def _adapt_steps(self):
+    def _adapt_steps(self): 
         #Adjust each VM[i] so ~50% acceptance per dimension
         for i in range(self.N):
             ratio = self.NACP[i] / self.NS

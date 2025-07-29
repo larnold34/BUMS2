@@ -3,16 +3,16 @@ import numpy as np
 
 class SpectrumBinFiller:
     def __init__(self, enbzkl, zkl, enbf):
-        self.enbzkl = np.array(enbzkl)
-        self.zkl = np.array(zkl)
-        self.enbf = np.array(enbf)
+        self.enbzkl = np.asarray(enbzkl, dtype=np.float64)
+        self.zkl = np.asarray(zkl, dtype=np.float64)
+        self.enbf = np.asarray(enbf, dtype=np.float64)
 
         self.n0 = len(enbzkl)
         self.nb = len(enbf) - 1
         self.n = len(enbf) - 1
 
-        self.fil = np.zeros(self.nb)
-        self.fi = np.zeros(self.nb)
+        self.fil = np.zeros(self.nb, dtype=np.float64)
+        self.fi = np.zeros(self.nb, dtype=np.float64)
 
     def fill(self):
         n0m1 = self.n0 - 1

@@ -63,6 +63,7 @@ class Bums2Driver:
 
         #Detector matrix
         self.mat = resp.mat
+        self.mat = self.mat[1:]
 
         #Pre-normalize parameters
         self._prepare_counts()
@@ -148,11 +149,10 @@ class Bums2Driver:
         
         if "MAXED" in alg:
             spl, splstart = maxed(self.cfg).maxed_unfold(
-                self.mat, self.bce, self.errbce, spl, self.cfg.num_groups, self.cfg.num_det, out_path)
-            
+                self.mat, self.bce, self.errbce, spli, self.cfg.num_groups, self.cfg.num_det, out_path)
         elif "SANDII" in alg:
             spl, splstart = sand2(self.cfg).sand2_unfold(
-                self.mat, self.bce, self.errbce, spl, self.cfg.num_groups, self.cfg.num_det, out_path)            
+                self.mat, self.bce, self.errbce, spli, self.cfg.num_groups, self.cfg.num_det, out_path)         
         else:
             # both BON and SPUNIT go here
             if "BON" in alg:

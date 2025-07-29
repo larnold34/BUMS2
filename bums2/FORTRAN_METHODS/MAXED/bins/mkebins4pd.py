@@ -4,16 +4,16 @@ import math
 
 class LogEnergyBinsPD:
     def __init__(self, enbf):
-        self.enbf_input = np.array(enbf)
+        self.enbf_input = np.asarray(enbf, dtype=np.float64)
         self.n = len(enbf)
-        self.enbf = np.zeros_like(enbf, dtype=float)
+        self.enbf = np.zeros_like(enbf, dtype=np.float64)
 
         self.EMEV_START = 1.3113526e-14
         self.TPOQ = 10 ** 0.25
 
     def _nint(self, x):
         #Fortran-style nearest integer rounding
-        return int(x + 0.5)
+         return int(np.floor(x + 0.5)) if x >= 0 else int(np.ceil(x - 0.5))
     
     def generate_bins(self):
         emev = self.EMEV_START
@@ -34,11 +34,14 @@ class LogEnergyBinsPD:
             if self.enbf_input[0] <= emev:
                 emin = emev
 
+        if emax <= emin:
+            raise ValueError("Invalid bin range: emax must be > emin")
+
         #Determine the number of bins
         n_bins = self._nint(4.0 * math.log10(emax / emin)) + 1
 
         #Build logarithmic bins
-        self.enbf = np.zeros(n_bins)
+        self.enbf = np.zeros(n_bins, dtype=np.float64)
         self.enbf[0] = emin
         for i in range(1, n_bins):
             self.enbf[i] = self.enbf[i-1] * self.TPOQ

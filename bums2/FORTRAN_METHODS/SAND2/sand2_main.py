@@ -10,7 +10,7 @@ from bums2.FORTRAN_METHODS.MAXED.spec_scaling.scaling import SpectrumScaler
 from bums2.FORTRAN_METHODS.SAND2.sand2_algo import Sand2Solver
 
 class Sand2Pipeline:
-    def __init__(self, input_file, response_file, max_iter, iqds=1, iqbs=3, chi_fac=1, dev=1e-3):
+    def __init__(self, input_file, response_file, max_iter=10, iqds=1, iqbs=3, chi_fac=1, dev=1e-3):
         self.input_file = input_file
         self.response_file = response_file
         self.IQDS = iqds

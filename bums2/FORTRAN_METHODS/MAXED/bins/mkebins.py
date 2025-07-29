@@ -3,21 +3,16 @@ import numpy as np
 
 class MergedEnergyBins:
     def __init__(self, enbzkl, enbr, nmax):
-        self.enbzkl = np.sort(np.array(enbzkl))
-        self.enbr = np.sort(np.array(enbr))
+        self.enbzkl = np.sort(np.array(enbzkl, dtype=np.float64))
+        self.enbr = np.sort(np.asarray(enbr, dtype=np.float64))
         self.nmax = nmax
-
-        self.sort = []
-        self.enb0 = []
+        self.enb0 = None
         self.n = 0
 
     def merge_and_filter(self):
         
-        #Merge into SORT array
-        self.sort = np.concatenate((self.enbzkl, self.enbr))
-
-        #Sort using np.sort, should replace HPSORT
-        self.sort = np.sort(self.sort)
+        #Merge into SORT array, accounting for sorting similar to HPSORT in the fortran
+        sort = np.sort(np.concatenate((self.enbzkl, self.enbr)))
 
         #Determine shared range
         maxmin = max(self.enbzkl[0], self.enbr[0])
@@ -25,10 +20,10 @@ class MergedEnergyBins:
 
         #Filter unique values within [maxmin, minmax]
         self.enb0 = [maxmin]
-        self.n = 1
-        for val in self.sort:
-            if val > maxmin and val <= minmax and val > self.enb0[-1]:
+        tol = 1e-12
+        for val in sort:
+            if val > maxmin and val <= minmax and (val - self.enb0[-1]) > tol:
                 self.enb0.append(val)
-                self.n += 1
-        
+
+        self.n = len(self.enb0)
         return self.enb0, self.n

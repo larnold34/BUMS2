@@ -74,13 +74,12 @@ class sand2:
             response_file= resp,
             iqds= 2,
             iqbs= 3,
-            max_iter= self.cfg.iter,
         )
 
         with open(out, "a") as f, contextlib.redirect_stdout(f):
             result = pipeline.run()
 
-        spl = result["FSNEW"]
-        splstart = result["FI"]
+        spl = result["FL"]
+        splstart = result["FIL"]
 
         return spl, splstart

@@ -55,7 +55,7 @@ C
 
       EPS = 1.0D-6
       NT = 5
-      MAXEVAL = 100 000
+      MAXEVAL = 100
 C
 C     
 C            
@@ -1257,7 +1257,7 @@ C      READ*,RT
 c      WRITE(*,'(/,''  ****   END OF DRIVER ROUTINE OUTPUT   ****''
 c     1          /,''  ****   BEFORE CALL TO SA.             ****'')')      
 
-      CALL SA(N,X,MAX,RT,EPS,NS,NT,NEPS,MAXEVL,LB,UB,C,IPRINT,ISEED1,
+      CALL SA(N,X,MAX,RT,EPS,NS,NT,NEPS,MAXEVAL,LB,UB,C,IPRINT,ISEED1,
      1        ISEED2,T,VM,XOPT,FOPT,NACC,NFCNEV,NOBDS,IER,
      2        FSTAR,XP,NACP)
 
@@ -1660,7 +1660,7 @@ C  If too many function evaluations occur, terminate the algorithm.
 		  IF (.NOT. MAX) FOPT = -FOPT
 		  IER = 1
 		  RETURN
-	       END IF
+             END IF
 
 C  Accept the new point if the function value increases.
 c         print *," ##### FP=",FP," F=",F," M=",M," J=",J," H=",H
