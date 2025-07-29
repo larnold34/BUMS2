@@ -35,7 +35,7 @@ sub user_input_cli{
 	my $num_bins = scalar @e_end;
 
     # Rebin as in the initial user_input
-    @spli = (99) x scalar @e_end;
+    @spli = (99) x scalar @eend;
     rebin(
         scalar(@eend),     # # of target groups
         $num_bins,    # # of input bins

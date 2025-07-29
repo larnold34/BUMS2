@@ -1,6 +1,7 @@
 #The following will parse any inputted spectrum given by a user using the cgi interface
 import sys
 import os
+import numpy as np
 from pathlib import Path
 from typing import List, Tuple, Optional, Union
 from urllib.parse import unquote
@@ -17,29 +18,29 @@ class UserSpectrumLoader:
     def __init__(self, cfg: Bums2Config, matrix_endpoints: List[float]):
         self.cfg = cfg
         self.matrix_endpoints = matrix_endpoints
-        self._raw_endpoints = List[float] = []
-        self._raw_values = List[float] = []
+        self._raw_endpoints: List[float] = []
+        self._raw_values: List[float] = []
 
     def load(self) -> List[float]:
         #Read in a two-column spectrum from CLI of CGI, rebin it, drop the first bin, and then return
         if "GATEWAY_INTERFACE" in os.environ:
             self._read_from_cgi()
         else:
-            self.read_from_cli()
+            self._read_from_cli()
         
-        if len(self._raw_values) > 1:
-            self._raw_values = self._raw_values[1:]
-            self._raw_endpoints = self._raw_endpoints[1:]
-        
+        #Perl applies a shift to the values before feeding it into the rebin
+        self._raw_values = self._raw_values[1:]
+
         rebinned = Rebin(
-            len(self.matrix_endpoints),
-            len(self._raw_endpoints),
-            1,
             self._raw_endpoints,
             self._raw_values,
-            self.matrix_endpoints
-        )
-        return rebinned
+            self.cfg.e_end
+        ).transform()
+
+        #Same as Perl's version of shift
+        rebinned  = rebinned[1:]
+
+        return np.array(rebinned)
         
     
     #Pull spectrum file from CLI
@@ -65,7 +66,7 @@ class UserSpectrumLoader:
         e_end, vals = [], []
         for raw in lines:
             s = raw.strip()
-            if not s or s.startwith("#"):
+            if not s or s.startswith("#"):
                 continue
             parts = s.split(None, 2)
             try:
