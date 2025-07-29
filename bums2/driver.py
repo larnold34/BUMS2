@@ -127,8 +127,8 @@ class Bums2Driver:
         #Transform and normalize
         alethnew, spl_unit = Standardize.trans_mat(self.aleth, spli)
         spl = Standardize.normalize(self.bce, self.errbce, alethnew, self.cfg.num_det, self.cfg.num_groups, spl_unit)
-        sf = Standardize.scale_factor(self.bce, self.errbce, self.aleth, self.cfg.num_det, self.cfg.num_groups, spli) * self.cfg.cal_factor
-        self.cfg.rnorm = sf
+        sf = Standardize.scale_factor(self.bce, self.errbce, self.aleth, self.cfg.num_det, self.cfg.num_groups, spli)
+        self.cfg.rnorm = sf * self.cfg.cal_factor
         bcc = Standardize.cal_response(alethnew, spl)
 
         #Compute diagonistics
@@ -138,8 +138,7 @@ class Bums2Driver:
         #Store the scaled spectrum
         splstart = np.zeros_like(spli)
         for i in range(self.cfg.num_groups):
-            splstart[i] = spli[i] * sf
-
+            splstart[i] = spli[i] * self.cfg.rnorm
         #Initialize the iterations and error
         iter_count = 0
         starterror = np.sqrt(error / self.cfg.num_det) * 100

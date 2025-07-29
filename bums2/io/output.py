@@ -143,15 +143,15 @@ class CLIFormatter(OutputFormatter):
         if cfg.start_spec.upper() == "MAXIET":
             print()
             print("Starting Spectrum      = MAXIET Algorithm")
+        elif cfg.start_spec.upper() == "USER INPUT":
+            print()
+            print("Starting Spectrum = User Input Spectrum")   
         else:
             spec = cfg.best_file
             if spec.is_file():
                 header = spec.read_text().splitlines()[0].rstrip()
                 print()
                 print(f"Starting Spectrum      = {header}")
-            else:
-                print()
-                print("Starting Spectrum = (none)")
         print()
                 
     
@@ -182,10 +182,8 @@ class CLIFormatter(OutputFormatter):
         edges = np.array(cfg.e_end[:n+1], dtype=float)   # length = n+1
         unfolded = np.empty(n+1, dtype=float)
         starting  = np.empty(n+1, dtype=float)
-
         unfolded[0]  = cfg.spl[0]
         unfolded[1:] = cfg.spl[:n]
-
         starting[0]  = cfg.splstart[0]
         starting[1:] = cfg.splstart[:n]
 
@@ -195,8 +193,12 @@ class CLIFormatter(OutputFormatter):
         x_decades = [10**i for i in range(min_exp, max_exp+1)]
 
         all_vals = np.hstack([unfolded, starting])
-        ymin, ymax = all_vals.min(), all_vals.max()
-        min_ye = math.floor(math.log10(ymin))
+        ymax = all_vals.max()
+        positive_vals = all_vals[all_vals > 0]
+        if len(positive_vals) == 0:
+            min_ye = -10  # fallback for all-zero case
+        else:
+            min_ye = math.floor(math.log10(positive_vals.min()))
         max_ye = math.ceil (math.log10(ymax))
         y_decades = [10**i for i in range(min_ye, max_ye+1)]
 
