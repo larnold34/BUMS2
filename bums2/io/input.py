@@ -141,6 +141,57 @@ class InputParser:
             data[key] = unquote(val)
         return data
 
+def run(kv_dict: Dict[str, str]) -> Bums2Config:
+    """Accepts a key=value dictionary and returns a Bums2Config object."""
+    parser = InputParser()
+
+    # Use CLI-style processing logic
+    # Reproduce logic from _parse_cli() but use kv_dict instead of a file
+
+    mask = []
+    counts = []
+    errors = []
+
+    for name in parser.DET_NAMES:
+        flag = kv_dict.get(name, "").lower() in ("1", "true", "yes")
+        mask.append(flag)
+
+        base = parser._key_with_underscore(name)
+
+        cnt = kv_dict.get(f"{base}_counts", "")
+        counts.append(cnt if cnt else "0")
+
+        err = kv_dict.get(f"{base}_counts_error", "")
+        errors.append(float(err) if err else 0.0)
+
+    kv_dict["detector_mask"] = ",".join("true" if f else "false" for f in mask)
+    kv_dict["measured_counts"] = ",".join(str(c) for c in counts)
+    kv_dict["measured_errors"] = ",".join(str(e) for e in errors)
+
+    kv_dict["input_file"] = "web"  # or SCRIPT_FILENAME if needed
+    kv_dict["output_file"] = ""
+
+    if "matrix" in kv_dict:
+        kv_dict["matrix_name"] = kv_dict["matrix"]
+
+    cfg = Bums2Config.from_dict(kv_dict)
+
+    cfg.detectors.clear()
+    for name, used, bce, err in zip(parser.DET_NAMES, cfg.detector_mask, cfg.measured_counts, cfg.measured_errors):
+        if not used:
+            continue
+        cfg.detectors.append(SimpleNamespace(ball=name, bce=bce, bcc=0.0, pcterr=0.0))
+
+    # --- Write output to file if output_file is defined ---
+    output_path = kv_dict.get("output_file")
+    if output_path:
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write("✔️ BUMS2 configuration completed successfully.\n\n")
+            f.write(str(cfg))  # or whatever actual result your pipeline produces
+
+
+    return cfg
+
 if __name__ == "__main__":
     cfg = InputParser().parse()
     print("CONFIGURED AS:\n", cfg)
