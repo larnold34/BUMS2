@@ -96,7 +96,7 @@ from bums2.FORTRAN_METHODS.MAXED.annealing.sa import SimulatedAnnealing
 from bums2.FORTRAN_METHODS.MAXED.annealing.prtvec import VectorPrinter
 
 class SimulatedAnnealingRunner:
-    def __init__(self, N, M, NB, MM, FI, S, D, OMEGA, FLUX, T=1.0, RT=0.9, EPS=1e-6, NS=20, NT=5,
+    def __init__(self, N, M, NB, MM, FI, S, D, OMEGA, FLUX, T=1.0, RT=0.85, EPS=1e-6, NS=20, NT=5,
                  NEPS=4, MAXEVL=100, ISEED1=1, ISEED2=2, IPRINT=1, MAX=True):
         self.N = N
         self.M = M
@@ -122,11 +122,12 @@ class SimulatedAnnealingRunner:
         self.MAX = MAX
 
         # Optimization vectors
-        self.X = np.zeros(N, dtype=np.float64)
-        self.VM = [1.0] * N
-        self.LB = [-1e25] * N
-        self.UB = [1e25] * N
-        self.C = [2.0] * N
+        self.X = np.zeros(M, dtype=np.float64)
+        self.VM = np.full(M, 1.0, dtype=np.float64)
+        self.LB = np.full(M, -1e25, dtype=np.float64)
+        self.UB = np.full(M, 1e25, dtype=np.float64)
+        self.C  = np.full(M, 2.0, dtype=np.float64)
+
 
     def run(self):
         print("\n==== Simulated Annealing Runner ====")

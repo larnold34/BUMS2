@@ -20,8 +20,8 @@ class SpectrumScaler:
         return fout
     
     def scale_fi(self, d, s, b, fi):
-        m, nb, = b.shape
-        eig = np.dot(b, fi)
+        # m, nb, = b.shape
+        eig = np.dot(b.astype(np.float64), fi.astype(np.float64))
         sum1 = np.sum((d * eig) / (s ** 2))
         sum2 = np.sum((eig ** 2) / (s ** 2))
 

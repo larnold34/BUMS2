@@ -333,11 +333,12 @@ class SimulatedAnnealing:
         #SA counters and histories
         self.NACC = 0 #Accepted evaluations
         self.NOBDS = 0 #Out-of-bounds proposals
+        self.LNOBS = 0 #Local count for each temperature cycle
         self.NFCNEV = 0 #Total function evaluations
         self.IER = 99 #Error code
 
         self.XOPT = self.X.copy()
-        self.NACP = [0] * self.N  #Accepted count per dimension
+        self.NACP = [0] * self.M  #Accepted count per dimension
         self.FSTAR = [float('inf')] * self.NEPS
 
     def _first_evaluation(self):
@@ -369,12 +370,12 @@ class SimulatedAnnealing:
         #succesfully optimizes the function or (ii) there are too many
         #function evaluations (more than MAXEVL).
         while True:
-            NUP = NDOWN = NREJ = NNEW = LNOBDS = 0
-
+            NUP = NDOWN = NREJ = NNEW = 0
+            self.LNOBDS = 0
             for z in range(self.NT):
                 for j in range(self.NS):
-                    for h in range(self.N):
-                        NUP, NNEW, NREJ, NDOWN = self._inner_step(h, z, j, LNOBDS, NUP, NNEW, NREJ, NDOWN)
+                    for h in range(self.M):
+                        NUP, NNEW, NREJ, NDOWN = self._inner_step(h, z, j, NUP, NNEW, NREJ, NDOWN)
 
                 self._adapt_steps()
 
@@ -384,7 +385,7 @@ class SimulatedAnnealing:
             if self.IPRINT >= 1:
                 SAReporter.prt9(
                     self.MAX,
-                    self.N,
+                    self.M,
                     self.T,
                     self.XOPT,
                     self.VM,
@@ -392,7 +393,7 @@ class SimulatedAnnealing:
                     self.NACC - NDOWN - NREJ,
                     NDOWN,
                     NREJ,
-                    self.NOBDS - self.NOBDS,
+                    self.LNOBDS,
                     NNEW
                 )
 
@@ -411,10 +412,10 @@ class SimulatedAnnealing:
             self.F = self.FOPT
             self.X[:] = self.XOPT
     
-    def _inner_step(self, h: int, z: int, j:int, LNOBDS: int, NUP: int, NNEW: int, NREJ: int, NDOWN: int):
+    def _inner_step(self, h: int, z: int, j:int,  NUP: int, NNEW: int, NREJ: int, NDOWN: int):
 
         #Propose new XP
-        XP, oob = self._propose(h, z, j, LNOBDS)
+        XP, oob = self._propose(h, z, j)
         self.XP = XP
 
         #Evaluate
@@ -465,9 +466,9 @@ class SimulatedAnnealing:
                      
                      
     
-    def _propose(self, h: int, z: int, j: int, LNOBDS: int) -> Tuple[List[float], bool]:
+    def _propose(self, h: int, z: int, j: int) -> Tuple[List[float], bool]:
         XP = self.X.copy()
-        for i in range(self.N):
+        for i in range(self.M):
             if i == h:
                 #Build the trial XP for the variable h
                 PP_gen = self.rng.RANMAR()
@@ -481,7 +482,7 @@ class SimulatedAnnealing:
             if XP[i] < self.LB[i] or XP[i] > self.UB[i]:
                 PP_bounds = self.rng.RANMAR()
                 XP[i] = self.LB[i] + (self.UB[i] - self.LB[i]) * PP_bounds
-                LNOBDS += 1
+                self.LNOBDS += 1
                 self.NOBDS += 1
                 oob = True
                 if self.IPRINT >= 3:
@@ -507,7 +508,7 @@ class SimulatedAnnealing:
          
     def _adapt_steps(self): 
         #Adjust each VM[i] so ~50% acceptance per dimension
-        for i in range(self.N):
+        for i in range(self.M):
             ratio = self.NACP[i] / self.NS
 
             if ratio > 0.6:
@@ -519,12 +520,12 @@ class SimulatedAnnealing:
             self.NACP[i] = 0
 
     def _converged(self) -> bool:
-        #Check if the last NEPS values of F differ by < EPS
-        #Shift history
-        self.FSTAR.pop(0)
-        self.FSTAR.append(self.F)
-        #If all within EPS of each other, done
-        return max(self.FSTAR) - min(self.FSTAR) <= self.EPS
+       if abs(self.FOPT - self.FSTAR[0]) > self.EPS:
+           return False
+       for fstar_i in self.FSTAR:
+           if abs(self.F - fstar_i) > self.EPS:
+               return False
+       return True
 
 
 

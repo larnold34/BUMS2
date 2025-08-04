@@ -19,29 +19,30 @@ class SpectrumBinFiller:
 
         #Precompute ZKLL, the log scaled bin height
         zkll = self.zkl[:n0m1] / (np.log(self.enbzkl[1:self.n0]) - np.log(self.enbzkl[:n0m1]))
+        zkll = np.asarray(zkll, dtype=np.float64)
 
         #Main loop from the original Perl
         for k in range(n0m1):
             for l in range(self.nb):
-                r2 = np.log(self.enbf[l + 1]) - np.log(self.enbf[l])
+                r2 = np.float64(np.log(self.enbf[l + 1]) - np.log(self.enbf[l]))
 
                 #Case 1: ENBF[l] ≤ ENBZKL[k] < ENBF[l+1]
                 if self.enbf[l] <= self.enbzkl[k] < self.enbf[l + 1]:
                     if self.enbf[l + 1] >= self.enbzkl[k + 1]:
-                        r1 = np.log(self.enbzkl[k + 1]) - np.log(self.enbzkl[k])
+                        r1 = np.float64(np.log(self.enbzkl[k + 1]) - np.log(self.enbzkl[k]))
                         self.fil[l] += zkll[k] * (r1/r2)
                     elif self.enbf[l + 1] < self.enbzkl[k + 1]:
-                        r1 = np.log(self.enbf[l + 1]) - np.log(self.enbzkl[k])
+                        r1 = np.float64(np.log(self.enbf[l + 1]) - np.log(self.enbzkl[k]))
                         self.fil[l] += zkll[k] * (r1/r2)
                 
                 #Case 2: ENBF[l] > ENBZKL[k]
                 elif self.enbf[l] > self.enbzkl[k]:
                     if self.enbf[l] < self.enbzkl[k + 1]:
                         if self.enbf[l + 1] <= self.enbzkl[k + 1]:
-                            r1 = np.log(self.enbf[l + 1]) - np.log(self.enbf[l])
+                            r1 = np.float64(np.log(self.enbf[l + 1]) - np.log(self.enbf[l]))
                             self.fil[l] += zkll[k] * (r1/r2)
                         elif self.enbf[l + 1] > self.enbzkl[k + 1]:
-                            r1 = np.log(self.enbzkl[k + 1]) - np.log(self.enbf[l])
+                            r1 = np.float64(np.log(self.enbzkl[k + 1]) - np.log(self.enbf[l]))
                             self.fil[l] += zkll[k] * (r1/r2)
 
         #Final adjustment to get FI

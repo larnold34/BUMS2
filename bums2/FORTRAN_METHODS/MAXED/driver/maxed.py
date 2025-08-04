@@ -2,7 +2,8 @@
 from bums2.FORTRAN_METHODS.MAXED.annealing.simann import SimulatedAnnealingRunner
 
 class MaxedDriver:
-    def __init__(self, m, nb, mm, fi, s, d, flux, t=1.0, rt=0.9):
+    def __init__(self, n, m, nb, mm, fi, s, d, flux, t=1.0, rt=0.85):
+        self.N = n
         self.M = m
         self.NB = nb
         self.MM = mm
@@ -19,7 +20,7 @@ class MaxedDriver:
         # print(f"Calling Minimization Subroutine: SIMANN T={self.T}\n")
 
         runner = SimulatedAnnealingRunner(
-            N=self.M,
+            N=self.N,
             M=self.M,
             NB=self.NB,
             MM=self.MM,
