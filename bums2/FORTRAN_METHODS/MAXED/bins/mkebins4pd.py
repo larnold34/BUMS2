@@ -13,7 +13,7 @@ class LogEnergyBinsPD:
 
     def _nint(self, x):
         #Fortran-style nearest integer rounding
-         return int(np.floor(x + 0.5)) if x >= 0 else int(np.ceil(x - 0.5))
+         return np.int64(np.floor(x + 0.5)) if x >= 0 else np.int64(np.ceil(x - 0.5))
     
     def generate_bins(self):
         emev = self.EMEV_START

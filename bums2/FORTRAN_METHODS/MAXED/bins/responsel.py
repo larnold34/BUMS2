@@ -16,13 +16,13 @@ class ResponseMapper:
     def map_response(self):
         for k in range(self.NB1):
             for l in range(self.NB):
-                r2 = np.log(self.ENBF[l + 1]) - np.log(self.ENBF[l])
+                r2 = np.float64(np.log(self.ENBF[l + 1]) - np.log(self.ENBF[l]))
 
                 if self.ENBF[l] <= self.ENBR[k] < self.ENBF[l + 1]:
                     if self.ENBF[l + 1] >= self.ENBR[k + 1]:
-                        r1 =  np.log(self.ENBR[k + 1]) - np.log(self.ENBR[k])
+                        r1 =  np.float64(np.log(self.ENBR[k + 1]) - np.log(self.ENBR[k]))
                     elif self.ENBF[l + 1] < self.ENBR[k + 1]:
-                        r1 = np.log(self.ENBF[l + 1]) - np.log(self.ENBR[k])
+                        r1 = np.float64(np.log(self.ENBF[l + 1]) - np.log(self.ENBR[k]))
 
                     for i in range(self.M):
                         J = self.RFN[i]-1
@@ -30,9 +30,9 @@ class ResponseMapper:
                 
                 elif self.ENBR[k] < self.ENBF[l] < self.ENBR[k + 1]:
                     if self.ENBF[l + 1] <= self.ENBR[k + 1]:
-                        r1 = np.log(self.ENBF[l + 1]) - np.log(self.ENBF[l])
+                        r1 = np.float64(np.log(self.ENBF[l + 1]) - np.log(self.ENBF[l]))
                     elif self.ENBF[l + 1] > self.ENBR[k + 1]:
-                        r1 = np.log(self.ENBR[k + 1]) - np.log(self.ENBF[l])
+                        r1 = np.float64(np.log(self.ENBR[k + 1]) - np.log(self.ENBF[l]))
 
                     for i in range(self.M):
                         J = self.RFN[i]-1

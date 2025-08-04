@@ -38,8 +38,8 @@ class NumberUtils:
 
 
         for ii in range(97):
-            s = 0.0
-            t = 0.5
+            s = np.float64(0.0)
+            t = np.float64(0.5)
             for jj in range(1, 25):
                 m = np.int64((np.int64(i * j) % 179))
                 m = np.int64((np.int64(m * k) % 179))
@@ -56,16 +56,16 @@ class NumberUtils:
         if uni < 0.0:
             uni += 1.0
         self.U[self.I97] = uni
+
         self.I97 = self.I97 - 1
-
-        if self.I97 == 0:
+        if self.I97 < 0:
             self.I97 = 96
+
         self.J97 = self.J97 - 1
-
-        if self.J97 == 0:
+        if self.J97 < 0:
             self.J97 = 96
-        self.C = self.C - self.CD
 
+        self.C = self.C - self.CD
         if self.C < 0.0:
             self.C += self.CM
         uni = uni - self.C
@@ -82,4 +82,4 @@ class NumberUtils:
         elif rdum < -180:
             return 0.0
         else:
-            return math.exp(rdum)
+            return float(np.exp(np.float64(rdum)))

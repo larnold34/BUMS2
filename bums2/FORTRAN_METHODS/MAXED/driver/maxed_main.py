@@ -34,6 +34,7 @@
 #     those of the United States Government or any agency thereof."
 #
 import numpy as np
+import math
 from bums2.FORTRAN_METHODS.MAXED.driver.maxed_input_parser import MaxedInputParser
 from bums2.FORTRAN_METHODS.MAXED.driver.maxed import MaxedDriver
 from bums2.FORTRAN_METHODS.MAXED.bins.mkebins import MergedEnergyBins
@@ -106,39 +107,45 @@ class MaxedPipeline:
             maxmin = max(ENBZKL[0], ENBR[0])
             minmax = min(ENBZKL[-1], ENBR[-1])
             ENBF = [x for x in ENBR if maxmin <= x <= minmax]
+            FI = SpectrumBinFiller(ENBZKL, ZKL, ENBF).fill()
         elif self.IQBS == 2:
             ENBF = ENBZKL.copy()
+            FI = ZKL.copy()
         elif self.IQBS == 1:
             ENBF = LogEnergyBinsPD(ENBZKL).generate_bins()
+            FI = SpectrumBinFiller(ENBZKL, ZKL, ENBF).fill()
         elif self.IQBS == 0:
             ENBF, _ = MergedEnergyBins(ENBZKL, ENBR, N0 + len(ENBR)).merge_and_filter()
+            FI = SpectrumBinFiller(ENBZKL, ZKL, ENBF).fill()
 
         ENBF = np.asarray(ENBF, dtype=np.float64)
         N = len(ENBF)
         NB = N -1
 
         #Fill FI
-        FI = SpectrumBinFiller(ENBZKL, ZKL, ENBF).fill()
+        #FI = SpectrumBinFiller(ENBZKL, ZKL, ENBF).fill()
 
         #Build the response matrix B
         B = ResponseMapper(RES, RFN, ENBF, ENBR, M, NB, len(ENBR)-1).map_response()
 
         #Scale FI
-        scf = SpectrumScaler([], FI, ENBF).scale_fi(D, S, B, FI)
+        FI = np.asarray(FI, dtype=np.longdouble)
+        scf = np.longdouble(SpectrumScaler([], FI, ENBF).scale_fi(D, S, B, FI))
         # print(f" SCALE FACTOR/DEFAULT SPEC. FOR BEST FIT = {scf:.6E}")
         FI *= scf
 
+        FI = FI.astype(np.float64)
         EDSP = B @ FI
         chi_default = np.sum(((D - EDSP)**2) / (S ** 2))
         print(f" CHI SQUARE/DEFAULT SPECTRUM  = {chi_default:.6f}")
 
 
-        FLUX = FI.sum()
+        FLUX = np.sum(FI, dtype=np.longdouble)
         MM = B.T.flatten(order="F").tolist()
 
         #Run simulated annealing
         # print(f"Running SIMANN optimization with T={self.T}, RT={self.RT}")
-        lambdas = MaxedDriver(M, NB, MM, FI, S, D, FLUX, t=self.T, rt=self.RT).run()
+        lambdas = MaxedDriver(N, M, NB, MM, FI, S, D, FLUX, t=self.T, rt=self.RT).run()
 
         #Compute FOUT
         FOUT = SpectrumScaler(MM, FI, ENBF).calc_fout(lambdas, M, NB, B)

@@ -1,5 +1,6 @@
 #This will be a python conversion of fcn.pl in the MAXED directory
 import numpy as np
+import math
 
 from bums2.FORTRAN_METHODS.MAXED.utils.NumberUtils import NumberUtils
 
@@ -36,13 +37,13 @@ class ObjectiveFunction:
         # flux : float
         #     Default-spectrum sum (FLUX).
         self.mm = mm
-        self.fi = fi.astype(np.float64)
+        self.fi = fi.astype(np.longdouble)
         self.s = s.astype(np.float64)
         self.d = d.astype(np.float64)
-        self.omega = float(omega)
-        self.flux = float(flux)
-        self.m = int(m)
-        self.nb = int(nb)
+        self.omega = np.float64(omega)
+        self.flux = np.float64(flux)
+        self.m = np.int64(m)
+        self.nb = np.int64(nb)
     
     def __call__(self, lambdas: np.ndarray) -> float:
         #Compute exponent vector for each bin j
@@ -53,19 +54,31 @@ class ObjectiveFunction:
         # exp_vals = np.array([NumberUtils.exprep(x) for x in exponent])
         # sum1 = np.dot(self.fi, exp_vals)
 
-        sum1 = 0.0
+        # sum1 = 0.0
+        # for j in range(self.nb):
+        #     sum2 = 0.0
+        #     for i in range(self.m):
+        #         idx = self.nb * i + j
+        #         sum2 += lambdas[i] * self.mm[idx]
+        #     sum1 += self.fi[j] * NumberUtils.exprep(-sum2)
+        sum1_terms = []
         for j in range(self.nb):
-            sum2 = 0.0
-            for i in range(self.m):
-                idx = self.nb * i + j
-                sum2 += lambdas[i] * self.mm[idx]
-            sum1 += self.fi[j] * NumberUtils.exprep(-sum2)
+            sum2_terms = [
+                np.float64(lambdas[i]) * np.float64(self.mm[self.nb * i + j])
+                for i in range(self.m)
+                ]
+            sum2 = math.fsum(sum2_terms)
+            exp_val = NumberUtils.exprep(-sum2)
+            sum1_terms.append(np.float64(self.fi[j]) * exp_val)
+        sum1 = np.sum(np.array(sum1_terms, dtype=np.longdouble), dtype=np.longdouble)
 
         #sum3 = sum_i(s[i] * lambdas)**2
-        sum3 = np.sum((self.s * lambdas) ** 2)
-        sum4 = np.dot(lambdas, self.d)
+        sum3 = math.fsum((self.s * lambdas) ** 2)
+        sum4 = np.sum(np.array([np.longdouble(lambdas[i]) * np.longdouble(self.d[i]) for i in range(self.m)], dtype=np.longdouble), dtype=np.longdouble)
 
-        H = -sum1 - np.sqrt(self.omega * sum3) - sum4 + self.flux
+        H_ld = -sum1 - np.sqrt(self.omega * sum3) - sum4 + self.flux
+        H = float(H_ld) 
+
         return H
         
         
