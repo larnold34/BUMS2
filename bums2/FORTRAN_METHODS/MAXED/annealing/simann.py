@@ -135,12 +135,6 @@ class SimulatedAnnealingRunner:
         print(f"MAXIMIZE: {self.MAX}, DIM: {self.N}, ISEED1/2: {self.ISEED1}, {self.ISEED2}")
         print(f"NT: {self.NT}, NS: {self.NS}, MAXEVL: {self.MAXEVL}, NEPS: {self.NEPS}")
 
-        if self.IPRINT:
-            VectorPrinter.print_vector("STARTING VALUES", self.X)
-            VectorPrinter.print_vector("INITIAL STEP LENGTH", self.VM)
-            VectorPrinter.print_vector("LOWER BOUND", self.LB)
-            VectorPrinter.print_vector("UPPER BOUND", self.UB)
-            VectorPrinter.print_vector("C VECTOR", self.C)
 
         sa = SimulatedAnnealing(
             N=self.N,
