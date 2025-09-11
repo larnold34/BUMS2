@@ -1,0 +1,13 @@
+<h3>Uncertainty Input</h3>
+
+<p>
+Select Manual Entry to type in uncertainty
+</p>
+
+<p>
+Select Equally Weighted to auto set all uncertainty to 5%
+</p>
+
+<p>
+Select Poisson Distributed to auto set the uncertainty according to a poisson distribution, note only use if units are constant for all count entries
+</p>
