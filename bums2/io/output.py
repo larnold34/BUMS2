@@ -356,48 +356,192 @@ class CGIFormatter(OutputFormatter):
         print(f"Total Fluence          = {s.sumspc:>11.3e} Neutrons/cm2<br>")
         print(f"Ave. Energy (Less Th.) = {s.aveen:>11.3e} MeV<br>")
         print(f"Dose Equivalent        = {s.sumrem:>11.3e} REM<br>")
-
-    def write_plot(self, cfg, out_path):
+    #LiDebug
+    #def write_plot(self, cfg, out_path):
+    #    print("</pre></font>")
+    #    gif = out_path / "spectrum.gif"
+    #    print(f"<div style='text-align:center'><img src='{gif}' alt='Spectrum'></div>")
+    #    print("<font face='courier'><pre>")
+    #LiDebug
+    #def _dose_section(self, cfg):
+    #    dr = DetectorResponses(
+    #        ce      = cfg.e_end.tolist(),
+    #        values  = cfg.spl.tolist(),
+    #        dose_dir     = Path("dose"),
+    #        response_dir = Path("response"),
+    #    )
+    #    def _dose_fn():
+    #        print("<h2>Dose Response Functions</h2>")
+    #        print("Name                           Response         Units<br>")
+    #        print("-" * 60 + "<br>")
+    #        for name, resp, units in dr.dose_functions():
+    #            print(f"{name:30s} {resp:15.5e}  {units}<br>")
+    #        print("<br>")
+    #        print("<h2>Standard Equivalent Dose Calculations</h2>")
+    #        print("Name                                        Value (pSv)<br>")
+    #        print("-" * 60 + "<br>")
+    #        for label, val, _ in dr.standard_equivalent():
+    #            print(f"{label:45s} {val:15.5e} pSv<br>")
+    #        print("<br>")
+    #    self._wrap_pre(_dose_fn)
+    #def _detector_response_section(self, cfg):
+    #    dr = DetectorResponses(
+    #        ce      = cfg.e_end.tolist(),
+    #        values  = cfg.spl.tolist(),
+    #        response_dir = Path("response"),
+    #    )
+    #    def _resp_fn():
+    #        print("<h2>Detector Responses</h2>")
+    #        print("Name                           Response         Units<br>")
+    #        print("-" * 60 + "<br>")
+    #        for name, resp, units in dr.detector_responses():
+    #            print(f"{name:30s} {resp:15.5e}  {units}<br>")
+    #        print("<br>")
+    #    self._wrap_pre(_resp_fn)
+    #LiDebug replaced with what's below:
+        # Helper to temporarily close the <pre> block, emit HTML, then reopen <pre>
+    def _wrap_pre(self, fn):
+        # close pre/font
         print("</pre></font>")
-        gif = out_path / "spectrum.gif"
-        print(f"<div style='text-align:center'><img src='{gif}' alt='Spectrum'></div>")
-        print("<font face='courier'><pre>")
+        try:
+            fn()
+        finally:
+            # reopen pre/font for subsequent fixed-width output
+            print("<font face='courier'><pre>")
+
+    def write_plot(self, cfg, out_path: Path):
+        """
+        Generate the spectrum plot (same as CLI) and save to output_path.
+        Then emit an <img> tag pointing at a web-accessible path if possible.
+        """
+        # Ensure out_path is a Path and exists
+        out_path = Path(out_path)
+        out_path.mkdir(parents=True, exist_ok=True)
+
+        # Build image path in output folder (web server should serve this folder)
+        img_filename = "spectrum.png"
+        img_path = out_path / img_filename
+
+        # === Plotting logic (copied from CLI version) ===
+        import matplotlib.pyplot as plt
+        from matplotlib.ticker import LogLocator, LogFormatterMathtext
+        import numpy as np
+        import math
+
+        plt.figure(figsize=(8,5))
+        n = cfg.num_groups
+
+        edges = np.array(cfg.e_end[:n+1], dtype=float)
+        unfolded = np.empty(n+1, dtype=float)
+        starting  = np.empty(n+1, dtype=float)
+
+        unfolded[0]  = cfg.spl[0]
+        unfolded[1:] = cfg.spl[:n]
+
+        starting[0]  = cfg.splstart[0]
+        starting[1:] = cfg.splstart[:n]
+
+        emin, emax = edges[0], edges[-1]
+        min_exp = math.floor(math.log10(emin))
+        max_exp = math.ceil (math.log10(emax))
+        x_decades = [10**i for i in range(min_exp, max_exp+1)]
+
+        all_vals = np.hstack([unfolded, starting])
+        ymin, ymax = all_vals.min(), all_vals.max()
+        min_ye = math.floor(math.log10(ymin))
+        max_ye = math.ceil (math.log10(ymax))
+        y_decades = [10**i for i in range(min_ye, max_ye+1)]
+
+        ax = plt.gca()
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+
+        ax.set_title("Bonner Sphere Unfolding", fontsize=12, fontweight="bold")
+        ax.grid(True, which="both", linestyle=":", linewidth=0.5)
+        ax.set_xlabel("Neutron Energy (MeV)")
+        ax.set_ylabel("Neutron Flux per Unit Lethargy")
+
+        ax.set_xticks(x_decades)
+        ax.xaxis.set_major_locator(LogLocator(base=10.0, subs=(1.0,), numticks=len(x_decades)))
+        ax.xaxis.set_minor_locator(LogLocator(base=10.0, subs=range(2,10), numticks=100))
+        ax.xaxis.set_major_formatter(LogFormatterMathtext(base=10, labelOnlyBase=True))
+
+        ax.set_yticks(y_decades)
+        ax.yaxis.set_major_locator(LogLocator(base=10.0, subs=(1.0,), numticks=len(y_decades)))
+        ax.yaxis.set_minor_locator(LogLocator(base=10.0, subs=range(2,10), numticks=100))
+        ax.yaxis.set_major_formatter(LogFormatterMathtext(base=10, labelOnlyBase=True))
+
+        ax.step(edges, unfolded, where="pre", label="Unfolded Spectrum")
+        ax.step(edges, starting,  where="pre", label="Starting Spectrum")
+
+        ax.set_xlim(10**min_exp, 10**max_exp)
+        ax.set_ylim(10**min_ye,  10**max_ye)
+
+        ax.legend(loc="upper right", frameon=False)
+        plt.tight_layout()
+        plt.savefig(img_path, dpi=150)
+        plt.close()
+
+        # === Emit HTML img tag ===
+        # Try to compute a web-accessible src by seeing if img_path is under /var/www/html
+        try:
+            web_root = Path("/var/www/html").resolve()
+            img_resolved = img_path.resolve()
+            if str(img_resolved).startswith(str(web_root)):
+                web_img_src = "/" + str(img_resolved.relative_to(web_root)).replace("\\", "/")
+            else:
+                # If not under web root, emit an absolute file path (may or may not be accessible),
+                # but the most common deployment will put the CGI's output_path under web root.
+                web_img_src = f"file://{img_resolved}"
+        except Exception:
+            web_img_src = f"file://{img_path}"
+
+        # Close pre, emit image HTML, reopen pre
+        def _emit_img():
+            print(f"<div style='text-align:center'><img src='{web_img_src}' alt='Spectrum Plot' style='max-width:100%; height:auto;'></div>")
+            print(f"<p style='text-align:center; font-family:monospace;'>Plot saved to {img_path}</p>")
+        self._wrap_pre(_emit_img)
 
     def _dose_section(self, cfg):
-        dr = DetectorResponses(
-            ce      = cfg.e_end.tolist(),
-            values  = cfg.spl.tolist(),
-            dose_dir     = Path("dose"),
-            response_dir = Path("response"),
-        )
+        """
+        Emit dose HTML inside the page. Use _wrap_pre to ensure we are outside the <pre> block.
+        This mirrors the CLI dose printing but as formatted HTML.
+        """
+        from bums2.core.summary import Summary  # if you need types
+        dr = DetectorResponses(cfg.ce, cfg.spc, dose_dir=Path("dose"), response_dir=Path("response"))
+
         def _dose_fn():
             print("<h2>Dose Response Functions</h2>")
-            print("Name                           Response         Units<br>")
-            print("-" * 60 + "<br>")
+            print("<table>")
+            print("<tr><th style='text-align:left'>Name</th><th style='text-align:right'>Response</th><th>Units</th></tr>")
             for name, resp, units in dr.dose_functions():
-                print(f"{name:30s} {resp:15.5e}  {units}<br>")
+                print(f"<tr><td>{name}</td><td style='text-align:right'>{resp:15.5e}</td><td>{units}</td></tr>")
+            print("</table>")
             print("<br>")
             print("<h2>Standard Equivalent Dose Calculations</h2>")
-            print("Name                                        Value (pSv)<br>")
-            print("-" * 60 + "<br>")
+            print("<table>")
+            print("<tr><th style='text-align:left'>Name</th><th style='text-align:right'>Value (pSv)</th></tr>")
             for label, val, _ in dr.standard_equivalent():
-                print(f"{label:45s} {val:15.5e} pSv<br>")
-            print("<br>")
+                print(f"<tr><td>{label}</td><td style='text-align:right'>{val:15.5e} pSv</td></tr>")
+            print("</table><br>")
         self._wrap_pre(_dose_fn)
+
     def _detector_response_section(self, cfg):
-        dr = DetectorResponses(
-            ce      = cfg.e_end.tolist(),
-            values  = cfg.spl.tolist(),
-            response_dir = Path("response"),
-        )
+        """
+        Emit detector response table. Use same API as CLI (detector_response()).
+        """
+        dr = DetectorResponses(cfg.ce, cfg.spc, response_dir=Path("response"))
+
         def _resp_fn():
             print("<h2>Detector Responses</h2>")
-            print("Name                           Response         Units<br>")
-            print("-" * 60 + "<br>")
-            for name, resp, units in dr.detector_responses():
-                print(f"{name:30s} {resp:15.5e}  {units}<br>")
-            print("<br>")
+            print("<table>")
+            print("<tr><th style='text-align:left'>Name</th><th style='text-align:right'>Response</th><th>Units</th></tr>")
+            # Use the same method name as the CLI version
+            for name, resp, units in dr.detector_response():
+                print(f"<tr><td>{name}</td><td style='text-align:right'>{resp:15.5e}</td><td>{units}</td></tr>")
+            print("</table><br>")
         self._wrap_pre(_resp_fn)
+
     @staticmethod
     def run_cgi(form_dict, output_path):
         from bums2.io import input as input_module

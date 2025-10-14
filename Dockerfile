@@ -147,7 +147,16 @@ RUN apt-get update && apt-get install -y \
 RUN apt-get update && apt-get install -y python3-pip
 RUN pip install --no-cache-dir --break-system-packages -r /BUMS2/requirements.txt
 
+RUN mkdir -p /usr/share/fonts && fc-cache -fv
 
+# Ensure a writable results directory (adjust path to match your CGI output_path)
+RUN mkdir -p /var/www/html/results \
+    && chmod -R 755 /var/www/html \
+    && chown -R www-data:www-data /var/www/html
+
+# If your CGI writes to another folder (e.g. /BUMS2/output), include that too:
+RUN mkdir -p /BUMS2/output \
+    && chmod -R 777 /BUMS2/output
 
 # Start Apache in the foreground
 CMD ["apache2ctl", "-D", "FOREGROUND"]
