@@ -8,6 +8,18 @@ import sys
 from bums2.core.config import Bums2Config
 from bums2.core.standardize import Standardize
 from bums2.utils.rebin import Rebin
+from pathlib import Path
+
+# Traverse up to find the actual /BUMS2 directory
+def find_project_root():
+    current = Path(__file__).resolve()
+    for parent in current.parents:
+        if (parent / "SPECTRA").exists():
+            return parent
+    raise FileNotFoundError("Could not locate project root with SPECTRA directory.")
+
+PROJECT_ROOT = find_project_root()
+SPECTRA_DIR = PROJECT_ROOT / "SPECTRA"
 
 
 # This program scans the guesses listed in the spectra directory
@@ -17,10 +29,16 @@ from bums2.utils.rebin import Rebin
 # Rebin spectrum to matrix energy bins 
 #
 class SpectrumGuesser:
-    def __init__(self, cfg: Bums2Config, standardize: Standardize, spectra_dir: Path = Path("spectra")):
+#    def __init__(self, cfg: Bums2Config, standardize: Standardize, spectra_dir: Path = Path("spectra")):
+#        self.cfg = cfg
+#        self.standardize = standardize
+#        self.spectra_dir = spectra_dir
+
+#LiDebug version below 
+    def __init__(self, cfg: Bums2Config, standardize: Standardize, spectra_dir: Optional[Path] = None):
         self.cfg = cfg
         self.standardize = standardize
-        self.spectra_dir = spectra_dir
+        self.spectra_dir = spectra_dir if spectra_dir is not None else SPECTRA_DIR
 
     def _list_spectra(self) -> List[Path]:
         #This function will be like dir_read
@@ -38,7 +56,38 @@ class SpectrumGuesser:
                     ends.append(float(parts[0]))
                     vals.append(float(parts[1]))
         return header, np.array(ends), np.array(vals)
-    
+    #LiDebug version for troubleshooting below
+#    def _load_spectrum(self, path):
+#        from pathlib import Path
+#        import os, sys
+#
+#        # If path is None, abort early
+#        if path is None:
+#            raise ValueError("Spectrum path is None")
+#
+#        # If it's not a Path object, convert it
+#        if not isinstance(path, Path):
+#            #Lidebug below
+#            path = SPECTRA_DIR / path
+#
+#            #path = Path(path)
+#
+#        # Print debug information to CGI output
+#        print("Content-Type: text/plain\n")
+#        print(f"[DEBUG] Attempting to load spectrum from path: {path}")
+#        print(f"[DEBUG] Absolute path resolved as: {path.resolve()}")
+#        print(f"[DEBUG] Current working directory: {os.getcwd()}")
+#        print(f"[DEBUG] File exists? {path.exists()}")
+#        print(f"[DEBUG] sys.path: {sys.path}")
+#
+#        # Try to open the file
+#        with path.open() as fh:
+#            lines = fh.readlines()
+#
+#        # Return dummy output for now just to prevent downstream crash
+#        return lines, None, None
+
+
     def guess(self, out) -> Tuple[str, np.ndarray]:
         #If Automatic is selected apply the original logic
         chosen: None
@@ -46,13 +95,13 @@ class SpectrumGuesser:
         spli = np.zeros(self.cfg.num_groups, dtype=float)
 
         if self.cfg.start_spec.upper().startswith("AUTOMATIC"):
-            print("Starting Spectra      Chi - Squared", file=out)
-            print("---------------       -----------", file=out)
+            print("Starting Spectra      Chi - Squared", file=sys.stdout) #file=out LiDebug
+            print("---------------       -----------", file=sys.stdout) #file=out LiDebug
 
             for spec_path in self._list_spectra():
                 #Load in name and two column data
                 header, e_end_in, val_in = self._load_spectrum(spec_path)
-                print(f"{header:20s}", end=" ", file=out)
+                print(f"{header:20s}", end=" ", file=sys.stdout) #file=out LiDebug
 
                 val_in = val_in[1:]
                 #Rebin the spectrum
@@ -92,7 +141,7 @@ class SpectrumGuesser:
                     errbce=self.cfg.errbce
                 )
 
-                print(f"{chi:11.3E}", file=out)
+                print(f"{chi:11.3E}", file=sys.stdout) #file=out LiDebug
                 if chi < best_chi:
                     best_chi = chi
                     chosen = spec_path

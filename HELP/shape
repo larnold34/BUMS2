@@ -7,7 +7,6 @@ energies greater than the peak for the first iteration.  Later iterations may ch
 maxwellian will fall off sharply, where as a shape=1.0 will cause the maxwellian 
 to be flat and equal to the peak value above the maxwellian peak.</p> 
 
-<img src=help/shape.gif>
 
 <p><br>
 
