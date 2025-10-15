@@ -2,3 +2,7 @@ SAVE/
 OUTPUT/
 tmp/
 *.sw?
+
+__pycache__/
+*.pyc
+*.pyo
