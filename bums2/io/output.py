@@ -448,10 +448,22 @@ class CGIFormatter(OutputFormatter):
         max_exp = math.ceil (math.log10(emax))
         x_decades = [10**i for i in range(min_exp, max_exp+1)]
 
+        #all_vals = np.hstack([unfolded, starting])
+        #ymin, ymax = all_vals.min(), all_vals.max()
+        #min_ye = math.floor(math.log10(ymin))
+        #max_ye = math.ceil (math.log10(ymax))
+        #y_decades = [10**i for i in range(min_ye, max_ye+1)]
         all_vals = np.hstack([unfolded, starting])
-        ymin, ymax = all_vals.min(), all_vals.max()
-        min_ye = math.floor(math.log10(ymin))
-        max_ye = math.ceil (math.log10(ymax))
+        ymax = all_vals.max()
+        
+        # Handle zeros safely (same as CLI version)
+        positive_vals = all_vals[all_vals > 0]
+        if len(positive_vals) == 0:
+            min_ye = -10  # fallback for all-zero case
+        else:
+            min_ye = math.floor(math.log10(positive_vals.min()))
+        
+        max_ye = math.ceil(math.log10(ymax))
         y_decades = [10**i for i in range(min_ye, max_ye+1)]
 
         ax = plt.gca()
