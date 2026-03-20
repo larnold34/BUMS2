@@ -6,7 +6,8 @@ BUMS—Bonner sphere Unfolding Made Simple: an HTML based multisphere neutron sp
 
 Originally BUMS Perl coding by Jeremy Sweezy (Georgia Tech) in 2000. 
 Additions by Pete Exline (Georiga Tech). 
-Docker container by Jeremy Sweezy (LANL) in April 2025, jsweezy@lanl.gov
+Docker container by Jeremy Sweezy (LANL) in April 2025, jsweezy@lanl.gov.
+Python modernization coding by Angel Mercado (Georgia Tech) and Lianna Arnold (Georgia Tech) in August 2025, amercado35@gatech.edu and larnold34@gatech.edu
 
 Original article:
 Sweezy, J., Hertel, N., & Veinot, K. (2002). 
@@ -32,9 +33,9 @@ BUNKI was originally programmed at the Navel Research Laboratory in July, 1983 b
 https://apps.dtic.mil/sti/tr/pdf/ADA142475.pdf
 
 
-## Installing Original Perl version with Docker
+## Building the Docker Image
 
-Create the docker image - just do this once. 
+Create the docker image - just do this once. Works for both the legacy and modern versions of BUMS.
 
 `docker build -t bums-server .`
 
@@ -46,11 +47,13 @@ Start an instance and mount your bums repo as /usr/lib/cgi-bin (use your own pat
 
 ## Running BUMS on web page
 
-Point your browser to: http://localhost:8080/cgi-bin/notezy.cgi
+For the legacy version of BUMS, point your browser to: http://localhost:8080/cgi-bin/notezy.cgi
+
+For the modern version of BUMS, point your browser to: http://localhost:8080/cgi-bin/web.cgi
 
 ## Running BUMS on command window
 
-In order to run BUMS from the command line, start another shell. You will need to get the hash of the running docker container:
+In order to run the legacy version from the command window, the user will need to enter the docker container. You will need to get the hash of the running docker container:
 
 `docker ps`
 
@@ -70,8 +73,17 @@ You will then see that you are in a bash shell within the container:
 root@b329bb59ef76:/usr/lib/cgi-bin# 
 ```
 
-To start BUMS within the docker contianer:
+To run BUMS within the docker contianer:
 `./notezy_cli.pl /path/to/input /path/to/output`
+
+
+In order to run the modern version of BUMS from the command window, point your system to the BUMS directory. 
+
+`cd /Users/jsweezy/git_repos/bums/`
+
+To run BUMS from the command window:
+`python -m bums2.driver -i \path\to\input -o \path\to\output`
+
 
 ## Debugging errors
 
