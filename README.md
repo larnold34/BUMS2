@@ -6,7 +6,7 @@ BUMS—Bonner sphere Unfolding Made Simple: an HTML based multisphere neutron sp
 
 Originally BUMS Perl coding by Jeremy Sweezy (Georgia Tech) in 2000. 
 Additions by Pete Exline (Georiga Tech). 
-Docker container by Jeremy Sweezy (LANL) in April 2025, jsweezy@lanl.gov
+Docker container by Jeremy Sweezy (LANL) in April 2025, jsweezy@lanl.gov.
 Python modernization coding by Angel Mercado (Georgia Tech) and Lianna Arnold (Georgia Tech) in August 2025, amercado35@gatech.edu and larnold34@gatech.edu
 
 Original article:
