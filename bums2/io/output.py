@@ -646,7 +646,7 @@ class CGIFormatter(OutputFormatter):
             project_root = Path(__file__).resolve().parent.parent
             spectra_dir = project_root / "SPECTRA"
 
-            sg = SpectrumGuesser(cfg, spectra_dir=spectra_dir, standardize=True)
+            sg = SpectrumGuesser(cfg, standardize=Standardize(), spectra_dir=spectra_dir)
 #LiDebug first, previous below
             best_file, spli = sg.guess(form_dict.get("input_spectrum"))
             #best_file, spli = sg.guess(None)
