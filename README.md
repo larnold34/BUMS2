@@ -29,7 +29,7 @@ MAXED contains SAND-II from Sandia National Laboratory by Patrick Griffin, Jake 
 
 The FORTRAN for BUNKI-UT is also included.  BUNKI-UT is a modification of BUNKI by Suzanne Peterson in March 1986 at the University of Texas, Austin. 
 
-BUNKI was originally programmed at the Navel Research Laboratory in July, 1983 by Kimberly A. Lowry and Tommy L. Johnson. https://doi.org/10.1097/00004032-198410000-00006.  The listing for BUNKI is provided in:
+BUNKI was originally programmed at the Naval Research Laboratory in July, 1983 by Kimberly A. Lowry and Tommy L. Johnson. https://doi.org/10.1097/00004032-198410000-00006.  The listing for BUNKI is provided in:
 https://apps.dtic.mil/sti/tr/pdf/ADA142475.pdf
 
 
